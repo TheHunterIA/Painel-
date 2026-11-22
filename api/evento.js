@@ -28,7 +28,25 @@ export default async function handler(req, res) {
   const p = banco.pipeline();
   p.hincrby('eventos', e, 1);
 
-  if (e === 'sessao') { p.pfadd('sess:dia:' + dia, s); p.pfadd('sess:total', s); p.hincrby('sess:aberturas', dia, 1); }
+  if (e === 'sessao') {
+    p.pfadd('sess:dia:' + dia, s); p.pfadd('sess:total', s); p.hincrby('sess:aberturas', dia, 1);
+    if (x.novo === true) p.hincrby('novos', dia, 1);
+    const dias = inteiro(x.dias, 0, 3650);
+    const volta1 = x.novo !== true && x.pd === true;                                  // só a 1ª abertura do dia de quem já jogava
+    if (volta1 && dias === 1) p.hincrby('ret1', dia, 1);                                // voltou no dia seguinte à primeira vez
+    if (volta1 && dias === 7) p.hincrby('ret7', dia, 1);                                // voltou 7 dias depois
+    if (x.disp === 'cel' || x.disp === 'pc') p.hincrby('disp', x.disp, 1);
+  }
+  else if (e === 'tempo') { const seg = inteiro(x.seg, 1, 4 * 3600); if (seg) p.hincrby('tempo', dia, seg); }
+  else if (e === 'carregou') { const ms = inteiro(x.ms, 1, 180000), dp = x.disp === 'cel' ? 'cel' : 'pc'; if (ms) { p.hincrby('carga', dp + ':soma', ms); p.hincrby('carga', dp + ':n', 1); } }
+  else if (e === 'compra') {
+    const k = typeof x.k === 'string' && /^[a-z]{2,10}$/.test(x.k) ? x.k : null, n = inteiro(x.n, 1, 25);
+    if (k) { p.hincrby('compras', k, 1); if (n) p.hincrby('compras:noite', k, n); }
+  }
+  else if (e === 'noite_abandono') {
+    const n = inteiro(x.n, 1, 24), volta = inteiro(x.volta, 1, 99), t = inteiro(x.t, 0, 3600);
+    if (n && volta) { p.hincrby('noite:' + volta + ':' + n, 'aband', 1); if (t !== null) p.hincrby('noite:' + volta + ':' + n, 'tempoAband', t); }
+  }
   else if (e === 'noite_inicio' || e === 'noite_fim') {
     const n = inteiro(x.n, 1, 24), volta = inteiro(x.volta, 1, 99);
     if (n && volta) {
@@ -37,7 +55,8 @@ export default async function handler(req, res) {
       else {
         p.hincrby('noite:' + k, x.vitoria ? 'vit' : 'der', 1);
         const tempo = inteiro(x.tempo, 0, 3600); if (tempo !== null) p.hincrby('noite:' + k, x.vitoria ? 'tempoVit' : 'tempoDer', tempo);
-        if (x.vitoria) { p.pfadd('venc:' + k, s); const vida = typeof x.vida === 'number' ? Math.round(Math.max(0, Math.min(1, x.vida)) * 100) : null; if (vida !== null) p.hincrby('noite:' + k, 'vida', vida); }
+        if (x.vitoria) { const des = inteiro(x.des, 0, 2); if (des !== null) p.hincrby('noite:' + k, 'des', des);
+          p.pfadd('venc:' + k, s); const vida = typeof x.vida === 'number' ? Math.round(Math.max(0, Math.min(1, x.vida)) * 100) : null; if (vida !== null) p.hincrby('noite:' + k, 'vida', vida); }
       }
     }
   } else if (e === 'erro') {

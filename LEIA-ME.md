@@ -44,6 +44,18 @@ Depois de publicar o jogo, abra-o, jogue uma noite e atualize o painel: os núme
 
 A Noite do dia não entra no funil; aparece em *Outros eventos* (`noite_dia_inicio`, `noite_dia_vitoria`, `noite_dia_derrota`).
 
+## Os outros números
+
+- **Tempo médio por jogador:** minutos de jogo por jogador, contando só o tempo com o jogo visível (últimos 7 dias no cartão; por dia na tabela).
+- **D1 e D7:** dos jogadores novos de um dia, quantos voltaram 1 dia (D1) ou 7 dias (D7) depois. Cada pessoa conta uma vez por dia, mesmo abrindo o jogo várias vezes.
+- **Jogando no celular:** parte das aberturas em celular ou tablet (tela de toque).
+- **Carregamento médio:** tempo da abertura da página até o jogo ficar pronto, separado em celular e computador.
+- **Abandonos:** saíram no meio da noite (voltaram ao menu ou fecharam o jogo) e, entre parênteses, em média aos quantos segundos.
+- **Desafios:** dos desafios possíveis nas vitórias (2 por noite), quantos foram cumpridos.
+- **Compras na Oficina:** quantas vezes cada melhoria foi comprada e em que noite da campanha, em média.
+
+Como o jogo não guarda nenhuma identificação, "jogador" no painel é uma sessão (cada abertura do jogo).
+
 ## Limites
 
 - O plano grátis do Upstash comporta dezenas de milhares de eventos por dia; cada noite jogada gera 2 eventos.
