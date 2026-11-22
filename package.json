@@ -1,0 +1,9 @@
+{
+  "name": "save-the-holidays-painel",
+  "private": true,
+  "type": "module",
+  "description": "Recebe os eventos anônimos do jogo Save the Holidays e mostra um painel com os números por noite.",
+  "dependencies": {
+    "@upstash/redis": "1.41.0"
+  }
+}

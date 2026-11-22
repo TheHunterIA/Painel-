@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel do Save the Holidays</title>
+<style>
+  :root { --fundo: #f6f7fb; --cartao: #fff; --texto: #1b2233; --suave: #667089; --linha: #e3e6ef; --barra: #3b6fe0; --barra2: #9db8f2; --bom: #1f9d55; --ruim: #d6453d; }
+  @media (prefers-color-scheme: dark) { :root { --fundo: #0f1420; --cartao: #182033; --texto: #e8ecf6; --suave: #98a2bb; --linha: #2a3550; --barra: #6f9bff; --barra2: #34507f; --bom: #4cc27a; --ruim: #ff7a70; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--fundo); color: var(--texto); font: 15px/1.45 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 48px; }
+  h1 { font-size: 22px; margin: 0 0 4px; } h2 { font-size: 17px; margin: 0 0 10px; }
+  .sub { color: var(--suave); margin: 0 0 18px; }
+  .cartao { background: var(--cartao); border: 1px solid var(--linha); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .numeros { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .numeros .cartao { margin: 0; } .numeros b { display: block; font-size: 26px; } .numeros span { color: var(--suave); font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--linha); white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; } th { color: var(--suave); font-weight: 600; font-size: 13px; }
+  .rolar { overflow-x: auto; }
+  .bar { height: 10px; border-radius: 5px; background: var(--barra); min-width: 2px; }
+  .barcel { width: 32%; min-width: 120px; } .barcel div { display: flex; align-items: center; gap: 8px; }
+  .queda { color: var(--ruim); font-weight: 600; } .ok { color: var(--bom); }
+  .dias { display: flex; align-items: flex-end; gap: 6px; height: 140px; }
+  .dias div { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; font-size: 11px; color: var(--suave); }
+  .dias i { display: block; width: 100%; background: var(--barra); border-radius: 4px 4px 0 0; min-height: 2px; }
+  .dias b { color: var(--texto); font-size: 12px; }
+  .erros li { margin-bottom: 6px; font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; word-break: break-word; }
+  .erros small { color: var(--suave); margin-right: 6px; }
+  form { display: flex; gap: 8px; flex-wrap: wrap; }
+  input, select, button { font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--linha); background: var(--cartao); color: var(--texto); }
+  button { background: var(--barra); color: #fff; border: 0; cursor: pointer; }
+  .aviso { color: var(--ruim); } .topo { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .dica { color: var(--suave); font-size: 13px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Save the Holidays — painel</h1>
+  <p class="sub">Números anônimos enviados pelo jogo. Atualize a página para ver os mais recentes.</p>
+
+  <div id="entrar" class="cartao">
+    <form id="fSenha"><input id="senha" type="password" placeholder="Senha do painel" autocomplete="current-password" required><button>Entrar</button></form>
+    <p id="msg" class="aviso"></p>
+  </div>
+
+  <div id="conteudo" hidden>
+    <div class="topo">
+      <label>Volta <select id="volta"></select></label>
+      <button id="sair" type="button" style="background:none;color:var(--suave);border:1px solid var(--linha)">Sair</button>
+    </div>
+    <p id="semBanco" class="aviso" hidden>O banco ainda não está conectado: os dados abaixo somem a cada nova implantação. Instale o Upstash Redis no Vercel (veja o LEIA-ME).</p>
+    <div class="numeros">
+      <div class="cartao"><span>Jogadores (total)</span><b id="nTotal">–</b></div>
+      <div class="cartao"><span>Jogadores hoje (UTC)</span><b id="nHoje">–</b></div>
+      <div class="cartao"><span>Chegaram à noite 24</span><b id="n24">–</b></div>
+      <div class="cartao"><span>Venceram a noite 24</span><b id="v24">–</b></div>
+    </div>
+
+    <div class="cartao">
+      <h2>Funil por noite</h2>
+      <div class="rolar"><table id="tNoites"></table></div>
+      <p class="dica"><b>Jogadores</b>: quantos começaram a noite (cada sessão conta uma vez). <b>Seguiram</b>: dos que venceram, quantos começaram a noite seguinte — números baixos mostram onde as pessoas param. <b>% vitória</b>: das partidas terminadas.</p>
+    </div>
+
+    <div class="cartao"><h2>Jogadores por dia (últimos 14 dias)</h2><div class="dias" id="dias"></div></div>
+    <div class="cartao"><h2>Erros mais recentes</h2><ol class="erros" id="erros"></ol><div class="rolar"><table id="tErros"></table></div></div>
+    <div class="cartao"><h2>Outros eventos</h2><div class="rolar"><table id="tEventos"></table></div></div>
+  </div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const pct = (a, b) => b ? Math.round(a / b * 100) + '%' : '–';
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let senha = ''; try { senha = sessionStorage.getItem('senhaPainel') || ''; } catch (e) {}
+for (let v = 1; v <= 5; v++) $('volta').insertAdjacentHTML('beforeend', `<option value="${v}">${v}</option>`);
+
+async function carregar() {
+  const r = await fetch('/api/resumo?volta=' + $('volta').value, { headers: { 'x-senha': senha } });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) { $('msg').textContent = d.erro || 'Erro ao carregar.'; $('entrar').hidden = false; $('conteudo').hidden = true; return; }
+  $('entrar').hidden = true; $('conteudo').hidden = false; $('semBanco').hidden = d.configurado;
+  $('nTotal').textContent = d.total; $('nHoje').textContent = d.porDia[d.porDia.length - 1].jogadores;
+  $('n24').textContent = d.noites[23].jogadores; $('v24').textContent = d.noites[23].vencedores;
+  const max = Math.max(1, ...d.noites.map(n => n.jogadores));
+  $('tNoites').innerHTML = '<tr><th>Noite</th><th class="barcel" style="text-align:left">Jogadores</th><th>Venceram</th><th>Seguiram</th><th>% vitória</th><th>Partidas</th><th>Tempo (vitória)</th><th>Tempo (derrota)</th><th>Vida ao vencer</th></tr>' +
+    d.noites.map((n, i) => { const prox = d.noites[i + 1], seg = prox && n.vencedores ? prox.jogadores / n.vencedores : null;
+      return `<tr><td>${n.n}</td><td class="barcel"><div><span class="bar" style="width:${n.jogadores / max * 100}%"></span>${n.jogadores}</div></td><td>${n.vencedores}</td>
+      <td class="${seg === null ? '' : seg < 0.6 ? 'queda' : 'ok'}">${seg === null ? '–' : Math.round(Math.min(1, seg) * 100) + '%'}</td><td>${pct(n.vit, n.vit + n.der)}</td><td>${n.vit + n.der}</td>
+      <td>${n.tempoVit === null ? '–' : n.tempoVit + ' s'}</td><td>${n.tempoDer === null ? '–' : n.tempoDer + ' s'}</td><td>${n.vida === null ? '–' : n.vida + '%'}</td></tr>`; }).join('');
+  const maxD = Math.max(1, ...d.porDia.map(x => x.jogadores));
+  $('dias').innerHTML = d.porDia.map(x => `<div><b>${x.jogadores}</b><i style="height:${x.jogadores / maxD * 100}%"></i>${x.dia.slice(8)}/${x.dia.slice(5, 7)}</div>`).join('');
+  $('erros').innerHTML = d.erros.length ? d.erros.slice(0, 15).map(e => `<li><small>${e.t ? new Date(e.t).toLocaleString('pt-BR') : ''}</small>${esc(e.m)}</li>`).join('') : '<li>Nenhum erro registrado.</li>';
+  const ec = Object.entries(d.errosCont).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  $('tErros').innerHTML = ec.length ? '<tr><th>Erro (mais frequentes)</th><th>Vezes</th></tr>' + ec.map(([m, c]) => `<tr><td style="white-space:normal;text-align:left">${esc(m)}</td><td>${c}</td></tr>`).join('') : '';
+  const ev = Object.entries(d.eventos).sort((a, b) => b[1] - a[1]);
+  $('tEventos').innerHTML = '<tr><th>Evento</th><th>Vezes</th></tr>' + ev.map(([k, v]) => `<tr><td>${esc(k)}</td><td>${v}</td></tr>`).join('');
+}
+$('fSenha').onsubmit = e => { e.preventDefault(); senha = $('senha').value; try { sessionStorage.setItem('senhaPainel', senha); } catch (x) {} $('msg').textContent = ''; carregar(); };
+$('volta').onchange = carregar;
+$('sair').onclick = () => { senha = ''; try { sessionStorage.removeItem('senhaPainel'); } catch (e) {} $('entrar').hidden = false; $('conteudo').hidden = true; };
+if (senha) carregar();
+</script>
+</body>
+</html>
