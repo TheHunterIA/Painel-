@@ -38,7 +38,7 @@
 <body>
 <main>
   <h1>Save the Holidays — painel</h1>
-  <p class="sub">Números anônimos enviados pelo jogo. Atualize a página para ver os mais recentes.</p>
+  <p class="sub">Números anônimos enviados pelo jogo. Atualize a página para ver os mais recentes. <b>Origem</b>: dentro da CrazyGames ou fora dela (endereço direto, link compartilhado); o que chegou antes da separação aparece como "fora".</p>
 
   <div id="entrar" class="cartao">
     <form id="fSenha"><input id="senha" type="password" placeholder="Senha do painel" autocomplete="current-password" required><button>Entrar</button></form>
@@ -47,7 +47,8 @@
 
   <div id="conteudo" hidden>
     <div class="topo">
-      <label>Volta <select id="volta"></select></label>
+      <div style="display:flex;gap:14px;flex-wrap:wrap"><label>Origem <select id="origem"><option value="todos">Todos</option><option value="cg">CrazyGames</option><option value="fora">Fora da CrazyGames</option></select></label>
+      <label>Volta <select id="volta"></select></label></div>
       <button id="sair" type="button" style="background:none;color:var(--suave);border:1px solid var(--linha)">Sair</button>
     </div>
     <p id="semBanco" class="aviso" hidden>O banco ainda não está conectado: os dados abaixo somem a cada nova implantação. Instale o Upstash Redis no Vercel (veja o LEIA-ME).</p>
@@ -84,7 +85,7 @@ let senha = ''; try { senha = sessionStorage.getItem('senhaPainel') || ''; } cat
 for (let v = 1; v <= 5; v++) $('volta').insertAdjacentHTML('beforeend', `<option value="${v}">${v}</option>`);
 
 async function carregar() {
-  const r = await fetch('/api/resumo?volta=' + $('volta').value, { headers: { 'x-senha': senha } });
+  const r = await fetch('/api/resumo?volta=' + $('volta').value + '&origem=' + $('origem').value, { headers: { 'x-senha': senha } });
   const d = await r.json().catch(() => ({}));
   if (!r.ok) { $('msg').textContent = d.erro || 'Erro ao carregar.'; $('entrar').hidden = false; $('conteudo').hidden = true; return; }
   $('entrar').hidden = true; $('conteudo').hidden = false; $('semBanco').hidden = d.configurado;
@@ -112,6 +113,8 @@ async function carregar() {
 }
 $('fSenha').onsubmit = e => { e.preventDefault(); senha = $('senha').value; try { sessionStorage.setItem('senhaPainel', senha); } catch (x) {} $('msg').textContent = ''; carregar(); };
 $('volta').onchange = carregar;
+$('origem').onchange = () => { try { sessionStorage.setItem('origemPainel', $('origem').value); } catch (e) {} carregar(); };
+try { const o = sessionStorage.getItem('origemPainel'); if (o) $('origem').value = o; } catch (e) {}
 $('sair').onclick = () => { senha = ''; try { sessionStorage.removeItem('senhaPainel'); } catch (e) {} $('entrar').hidden = false; $('conteudo').hidden = true; };
 if (senha) carregar();
 </script>

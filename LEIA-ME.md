@@ -44,6 +44,11 @@ Depois de publicar o jogo, abra-o, jogue uma noite e atualize o painel: os núme
 
 A Noite do dia não entra no funil; aparece em *Outros eventos* (`noite_dia_inicio`, `noite_dia_vitoria`, `noite_dia_derrota`).
 
+## Origem: CrazyGames ou fora
+
+No topo do painel, **Origem** escolhe entre *Todos*, *CrazyGames* (o jogo aberto dentro do site da CrazyGames) e *Fora da CrazyGames* (endereço direto, link compartilhado, outro site).
+O jogo descobre sozinho de onde está sendo jogado. O que chegou antes dessa separação aparece como *fora*.
+
 ## Os outros números
 
 - **Tempo médio por jogador:** minutos de jogo por jogador, contando só o tempo com o jogo visível (últimos 7 dias no cartão; por dia na tabela).

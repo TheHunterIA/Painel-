@@ -25,7 +25,11 @@ export default async function handler(req, res) {
   if (!s || !e) return res.status(400).end();
 
   const dia = new Date().toISOString().slice(0, 10);   // UTC, igual ao jogo
-  const p = banco.pipeline();
+  // origem: CrazyGames ('cg:' na frente de cada chave) ou fora (sem prefixo; os dados de antes da separação ficam aqui)
+  const pre = d.o === 'cg' ? 'cg:' : '';
+  const pl = banco.pipeline();
+  const p = { exec: () => pl.exec() };
+  for (const m of ['hincrby', 'pfadd', 'lpush', 'ltrim']) p[m] = (k, ...a) => { pl[m](pre + k, ...a); return p; };
   p.hincrby('eventos', e, 1);
 
   if (e === 'sessao') {
