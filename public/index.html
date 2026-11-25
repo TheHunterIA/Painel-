@@ -5,106 +5,224 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Painel do Save the Holidays</title>
 <style>
-  :root { --fundo: #f6f7fb; --cartao: #fff; --texto: #1b2233; --suave: #667089; --linha: #e3e6ef; --barra: #3b6fe0; --barra2: #9db8f2; --bom: #1f9d55; --ruim: #d6453d; }
-  @media (prefers-color-scheme: dark) { :root { --fundo: #0f1420; --cartao: #182033; --texto: #e8ecf6; --suave: #98a2bb; --linha: #2a3550; --barra: #6f9bff; --barra2: #34507f; --bom: #4cc27a; --ruim: #ff7a70; } }
+  :root { --fundo: #f6f7fb; --cartao: #fff; --texto: #1b2233; --suave: #667089; --linha: #e3e6ef; --barra: #3b6fe0; --barra2: #c9d7f7; --bom: #1f9d55; --bomfundo: #e3f5ea; --ruim: #d6453d; --ruimfundo: #fde8e6; --alerta: #b7791f; --alertafundo: #fdf3dc; }
+  @media (prefers-color-scheme: dark) { :root { --fundo: #0f1420; --cartao: #182033; --texto: #e8ecf6; --suave: #98a2bb; --linha: #2a3550; --barra: #6f9bff; --barra2: #2b4068; --bom: #4cc27a; --bomfundo: #17382a; --ruim: #ff7a70; --ruimfundo: #402021; --alerta: #e8b95a; --alertafundo: #3c3217; } }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--fundo); color: var(--texto); font: 15px/1.45 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+  body { margin: 0; background: var(--fundo); color: var(--texto); font: 15px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
   main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 48px; }
-  h1 { font-size: 22px; margin: 0 0 4px; } h2 { font-size: 17px; margin: 0 0 10px; }
-  .sub { color: var(--suave); margin: 0 0 18px; }
+  h1 { font-size: 22px; margin: 0 0 4px; } h2 { font-size: 17px; margin: 0 0 4px; }
+  .sub { color: var(--suave); margin: 0 0 6px; font-size: 14px; }
   .cartao { background: var(--cartao); border: 1px solid var(--linha); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
-  .numeros { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
-  .numeros .cartao { margin: 0; } .numeros b { display: block; font-size: 26px; } .numeros span { color: var(--suave); font-size: 13px; }
+  .dica { color: var(--suave); font-size: 13px; margin: 6px 0 12px; }
+  .aviso { color: var(--ruim); }
+  /* filtros */
+  .filtros { position: sticky; top: 0; z-index: 5; background: var(--fundo); padding: 10px 0 12px; margin-bottom: 8px; border-bottom: 1px solid var(--linha); }
+  .linha { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .linha + .linha { margin-top: 8px; }
+  .chip { background: var(--cartao); color: var(--texto); border: 1px solid var(--linha); border-radius: 999px; padding: 6px 14px; cursor: pointer; font: inherit; font-size: 14px; }
+  .chip.on { background: var(--barra); color: #fff; border-color: var(--barra); }
+  label { font-size: 13px; color: var(--suave); display: inline-flex; align-items: center; gap: 6px; }
+  input, select, button { font: inherit; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--linha); background: var(--cartao); color: var(--texto); }
+  button.prim { background: var(--barra); color: #fff; border: 0; cursor: pointer; }
+  .sair { margin-left: auto; background: none; color: var(--suave); cursor: pointer; }
+  .mostrando { font-size: 14px; margin: 10px 0 0; } .mostrando b { font-weight: 650; }
+  /* resumo em palavras */
+  .resumoTxt ul { margin: 8px 0 0; padding-left: 20px; } .resumoTxt li { margin-bottom: 6px; }
+  .tag { display: inline-block; font-size: 12px; font-weight: 650; border-radius: 6px; padding: 1px 7px; margin-right: 4px; }
+  .tag.r { background: var(--ruimfundo); color: var(--ruim); } .tag.a { background: var(--alertafundo); color: var(--alerta); } .tag.v { background: var(--bomfundo); color: var(--bom); }
+  .nota { background: var(--alertafundo); color: var(--alerta); border-radius: 8px; padding: 8px 12px; font-size: 13.5px; margin-bottom: 12px; }
+  /* números */
+  .numeros { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .numeros .cartao { margin: 0; padding: 14px; } .numeros span { color: var(--suave); font-size: 13px; font-weight: 600; }
+  .numeros b { display: block; font-size: 28px; line-height: 1.2; margin: 2px 0; } .numeros small { color: var(--suave); font-size: 12px; display: block; line-height: 1.35; }
+  /* tabelas */
   table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-  th, td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--linha); white-space: nowrap; }
-  th:first-child, td:first-child { text-align: left; } th { color: var(--suave); font-weight: 600; font-size: 13px; }
+  th, td { text-align: right; padding: 7px 8px; border-bottom: 1px solid var(--linha); white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; } th { color: var(--suave); font-weight: 600; font-size: 12.5px; vertical-align: bottom; white-space: normal; }
   .rolar { overflow-x: auto; }
-  .bar { height: 10px; border-radius: 5px; background: var(--barra); min-width: 2px; }
-  .barcel { width: 32%; min-width: 120px; } .barcel div { display: flex; align-items: center; gap: 8px; }
-  .queda { color: var(--ruim); font-weight: 600; } .ok { color: var(--bom); }
-  .dias { display: flex; align-items: flex-end; gap: 6px; height: 140px; }
-  .dias div { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; font-size: 11px; color: var(--suave); }
-  .dias i { display: block; width: 100%; background: var(--barra); border-radius: 4px 4px 0 0; min-height: 2px; }
-  .dias b { color: var(--texto); font-size: 12px; }
-  .erros li { margin-bottom: 6px; font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; word-break: break-word; }
-  .erros small { color: var(--suave); margin-right: 6px; }
-  form { display: flex; gap: 8px; flex-wrap: wrap; }
-  input, select, button { font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--linha); background: var(--cartao); color: var(--texto); }
-  button { background: var(--barra); color: #fff; border: 0; cursor: pointer; }
-  .aviso { color: var(--ruim); } .topo { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
-  .dica { color: var(--suave); font-size: 13px; margin-top: 8px; }
+  .barcel { width: 34%; min-width: 130px; text-align: left; } .barcel div { display: flex; align-items: center; gap: 8px; }
+  .bar { display: inline-block; height: 12px; border-radius: 6px; background: var(--barra); min-width: 2px; }
+  .pill { display: inline-block; min-width: 52px; text-align: center; border-radius: 999px; padding: 1px 9px; font-weight: 650; font-size: 13.5px; background: var(--linha); }
+  .pill.r { background: var(--ruimfundo); color: var(--ruim); } .pill.v { background: var(--bomfundo); color: var(--bom); }
+  .sem-det .det { display: none; } small.s { color: var(--suave); }
+  .ferr { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px; font-size: 13.5px; }
+  /* gráfico por dia */
+  .dias { display: flex; align-items: flex-end; gap: 4px; height: 150px; overflow-x: auto; padding-bottom: 2px; }
+  .dia { flex: 1; min-width: 26px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; font-size: 11px; color: var(--suave); background: none; border: 0; padding: 0; cursor: pointer; border-radius: 6px; }
+  .dia:hover { background: var(--linha); } .dia i { display: block; width: 100%; background: var(--barra2); border-radius: 4px 4px 0 0; min-height: 2px; }
+  .dia.on i { background: var(--barra); } .dia b { color: var(--texto); font-size: 12px; font-weight: 600; }
+  details { margin-bottom: 16px; } details > summary { cursor: pointer; font-weight: 650; padding: 4px 0; }
+  .erros li { margin-bottom: 6px; font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; word-break: break-word; } .erros small { color: var(--suave); margin-right: 6px; }
+  @media (max-width: 600px) { .sair { margin-left: 0; } .numeros b { font-size: 24px; } }
 </style>
 </head>
 <body>
 <main>
   <h1>Save the Holidays — painel</h1>
-  <p class="sub">Números anônimos enviados pelo jogo. Atualize a página para ver os mais recentes. <b>Origem</b>: dentro da CrazyGames ou fora dela (endereço direto, link compartilhado); o que chegou antes da separação aparece como "fora".</p>
+  <p class="sub">Números anônimos enviados pelo jogo. Cada "jogador" é uma abertura do jogo (sem identificar ninguém).</p>
 
   <div id="entrar" class="cartao">
-    <form id="fSenha"><input id="senha" type="password" placeholder="Senha do painel" autocomplete="current-password" required><button>Entrar</button></form>
+    <form id="fSenha" class="linha"><input id="senha" type="password" placeholder="Senha do painel" autocomplete="current-password" required><button class="prim">Entrar</button></form>
     <p id="msg" class="aviso"></p>
   </div>
 
   <div id="conteudo" hidden>
-    <div class="topo">
-      <div style="display:flex;gap:14px;flex-wrap:wrap"><label>Origem <select id="origem"><option value="todos">Todos</option><option value="cg">CrazyGames</option><option value="fora">Fora da CrazyGames</option></select></label>
-      <label>Volta <select id="volta"></select></label></div>
-      <button id="sair" type="button" style="background:none;color:var(--suave);border:1px solid var(--linha)">Sair</button>
+    <div class="filtros">
+      <div class="linha" id="chips"></div>
+      <div class="linha">
+        <label>De <input type="date" id="de"></label>
+        <label>até <input type="date" id="ate"></label>
+        <button class="prim" id="aplicar" type="button">Ver esses dias</button>
+        <label>Origem <select id="origem"><option value="todos">Todas</option><option value="cg">CrazyGames</option><option value="fora">Fora da CrazyGames</option></select></label>
+        <label>Volta <select id="volta"></select></label>
+        <button class="sair" id="sair" type="button">Sair</button>
+      </div>
+      <p class="mostrando" id="mostrando"></p>
     </div>
     <p id="semBanco" class="aviso" hidden>O banco ainda não está conectado: os dados abaixo somem a cada nova implantação. Instale o Upstash Redis no Vercel (veja o LEIA-ME).</p>
+    <div id="notaDetalhe" class="nota" hidden></div>
+
+    <div class="cartao resumoTxt"><h2>Resumo em palavras</h2><ul id="frases"></ul></div>
+
     <div class="numeros">
-      <div class="cartao"><span>Jogadores (total)</span><b id="nTotal">–</b></div>
-      <div class="cartao"><span>Jogadores hoje (UTC)</span><b id="nHoje">–</b></div>
-      <div class="cartao"><span>Chegaram à noite 24</span><b id="n24">–</b></div>
-      <div class="cartao"><span>Venceram a noite 24</span><b id="v24">–</b></div>
-      <div class="cartao"><span>Tempo médio por jogador (7 dias)</span><b id="cMin">–</b></div>
-      <div class="cartao"><span>Voltaram no dia seguinte (D1, 7 dias)</span><b id="cD1">–</b></div>
-      <div class="cartao"><span>Voltaram 7 dias depois (D7)</span><b id="cD7">–</b></div>
-      <div class="cartao"><span>Jogando no celular</span><b id="cCel">–</b></div>
-      <div class="cartao"><span>Carregamento médio</span><b id="cCarga" style="font-size:20px">–</b></div>
+      <div class="cartao"><span>Jogadores</span><b id="nTotal">–</b><small id="hTotal"></small></div>
+      <div class="cartao"><span>Terminaram a campanha</span><b id="v24">–</b><small id="h24"></small></div>
+      <div class="cartao"><span>Tempo médio de jogo</span><b id="cMin">–</b><small>por jogador, só com o jogo na tela</small></div>
+      <div class="cartao"><span>Voltam no dia seguinte</span><b id="cD1">–</b><small>dos jogadores novos de um dia, quantos voltam no outro (D1)</small></div>
+      <div class="cartao"><span>Voltam depois de 7 dias</span><b id="cD7">–</b><small>dos jogadores novos, quantos voltam uma semana depois (D7)</small></div>
+      <div class="cartao"><span>Jogam no celular</span><b id="cCel">–</b><small>o resto joga no computador</small></div>
+      <div class="cartao"><span>Tempo para carregar</span><b id="cCarga" style="font-size:19px;margin:6px 0">–</b><small>até o menu aparecer</small></div>
     </div>
 
     <div class="cartao">
-      <h2>Funil por noite</h2>
+      <h2>Onde as pessoas desistem</h2>
+      <p class="dica">Cada linha é uma noite. <b>Seguiram</b> = de quem venceu a noite, quantos começaram a próxima: <span class="pill r">vermelho</span> abaixo de 60% (aqui as pessoas estão parando), <span class="pill v">verde</span> a partir de 80%. <b>Taxa de vitória</b> baixa (vermelho abaixo de 40%) indica noite difícil demais.</p>
       <div class="rolar"><table id="tNoites"></table></div>
-      <p class="dica"><b>Jogadores</b>: quantos começaram a noite (cada sessão conta uma vez). <b>Seguiram</b>: dos que venceram, quantos começaram a noite seguinte — números baixos mostram onde as pessoas param. <b>% vitória</b>: das partidas terminadas. <b>Abandonos</b>: saíram no meio da noite (voltaram ao menu ou fecharam o jogo), com o tempo médio em que saíram. <b>Desafios</b>: dos desafios possíveis nas vitórias, quantos foram cumpridos.</p>
+      <div class="ferr">
+        <label><input type="checkbox" id="detalhes"> Mostrar mais detalhes (tempo, vida, desafios)</label>
+        <label><input type="checkbox" id="todas"> Mostrar as 24 noites</label>
+      </div>
     </div>
 
-    <div class="cartao"><h2>Jogadores por dia (últimos 14 dias)</h2><div class="dias" id="dias"></div><div class="rolar" style="margin-top:12px"><table id="tDias"></table></div>
-      <p class="dica"><b>Novos</b>: primeira vez no jogo. <b>D1</b>: dos novos do dia anterior, quantos voltaram neste dia. <b>D7</b>: dos novos de 7 dias antes, quantos voltaram neste dia. <b>Minutos</b>: tempo médio de jogo por jogador (só com o jogo visível).</p></div>
-    <div class="cartao"><h2>Compras na Oficina</h2><div class="rolar"><table id="tCompras"></table></div><p class="dica"><b>Noite média</b>: em que ponto da campanha, em média, a melhoria é comprada.</p></div>
-    <div class="cartao"><h2>Erros mais recentes</h2><ol class="erros" id="erros"></ol><div class="rolar"><table id="tErros"></table></div></div>
-    <div class="cartao"><h2>Outros eventos</h2><div class="rolar"><table id="tEventos"></table></div></div>
+    <div class="cartao">
+      <h2>Jogadores por dia</h2>
+      <p class="dica">Clique num dia para ver só aquele dia. Os dias seguem o horário UTC (cada dia termina às 21h em Brasília).</p>
+      <div class="dias" id="dias"></div>
+      <details style="margin:12px 0 0"><summary>Tabela por dia</summary><div class="rolar"><table id="tDias"></table></div>
+      <p class="dica"><b>Novos</b>: primeira vez no jogo. <b>D1</b>: dos novos do dia anterior, quantos voltaram neste dia. <b>D7</b>: dos novos de 7 dias antes, quantos voltaram neste dia. <b>Minutos</b>: tempo médio por jogador.</p></details>
+    </div>
+
+    <div class="cartao"><h2>Compras na Oficina</h2><p class="dica"><b>Noite média</b>: em que ponto da campanha, em média, a melhoria é comprada.</p><div class="rolar"><table id="tCompras"></table></div></div>
+
+    <details class="cartao"><summary>Detalhes técnicos: erros e eventos</summary>
+      <h2 style="margin-top:12px">Erros mais recentes</h2><ol class="erros" id="erros"></ol><div class="rolar"><table id="tErros"></table></div>
+      <h2 style="margin-top:16px">Todos os eventos</h2><div class="rolar"><table id="tEventos"></table></div>
+    </details>
   </div>
 </main>
 <script>
 const $ = id => document.getElementById(id);
-const pct = (a, b) => b ? Math.round(a / b * 100) + '%' : '–';
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const iso = t => new Date(t).toISOString().slice(0, 10);
+const soma = (d, k) => iso(Date.parse(d) + k * 864e5);
+const dm = d => d.slice(8) + '/' + d.slice(5, 7);
+const num = v => v === null || v === undefined ? '–' : v;
+const tempoTxt = s => s === null || s === undefined ? '–' : s >= 60 ? Math.floor(s / 60) + ' min ' + (s % 60 ? s % 60 + ' s' : '') : s + ' s';
+const MIN_AMOSTRA = 5;   // abaixo disso os percentuais não são confiáveis: não entram nas conclusões
+
 let senha = ''; try { senha = sessionStorage.getItem('senhaPainel') || ''; } catch (e) {}
+let estado = { de: '', ate: '' };   // vazio = tudo
+try { Object.assign(estado, JSON.parse(sessionStorage.getItem('periodoPainel') || '{}')); } catch (e) {}
 for (let v = 1; v <= 5; v++) $('volta').insertAdjacentHTML('beforeend', `<option value="${v}">${v}</option>`);
 
+function presets() {
+  const h = iso(Date.now());
+  return [['Hoje', h, h], ['Ontem', soma(h, -1), soma(h, -1)], ['7 dias', soma(h, -6), h], ['30 dias', soma(h, -29), h], ['Tudo', '', '']];
+}
+function desenharChips() {
+  $('chips').innerHTML = presets().map(([nome, de, ate]) => `<button type="button" class="chip ${de === estado.de && ate === estado.ate ? 'on' : ''}" data-de="${de}" data-ate="${ate}">${nome}</button>`).join('');
+  $('de').value = estado.de; $('ate').value = estado.ate; $('de').max = $('ate').max = iso(Date.now());
+}
+function escolher(de, ate) { estado = { de, ate }; try { sessionStorage.setItem('periodoPainel', JSON.stringify(estado)); } catch (e) {} carregar(); }
+$('chips').onclick = e => { const b = e.target.closest('.chip'); if (b) escolher(b.dataset.de, b.dataset.ate); };
+$('aplicar').onclick = () => { let de = $('de').value, ate = $('ate').value; if (!de && !ate) return; if (!de) de = ate; if (!ate) ate = de; if (de > ate) [de, ate] = [ate, de]; escolher(de, ate); };
+$('dias').onclick = e => { const b = e.target.closest('.dia'); if (b) escolher(b.dataset.dia, b.dataset.dia); };
+
+function periodoTxt(p) {
+  if (!p.filtrado) return 'todo o período (desde o início)';
+  if (p.de === p.ate) return p.de === p.hoje ? 'hoje (' + dm(p.de) + ')' : p.de === soma(p.hoje, -1) ? 'ontem (' + dm(p.de) + ')' : 'o dia ' + dm(p.de);
+  return 'de ' + dm(p.de) + ' a ' + dm(p.ate);
+}
+
+function frases(d) {
+  const f = [], ns = d.noites, p = d.periodo, tot = d.total;
+  let ultima = 0; ns.forEach((n, i) => { if (n.jogadores) ultima = i + 1; });
+  if (!tot) return ['<span class="tag a">Sem dados</span> Ninguém abriu o jogo neste período.'];
+  f.push(`<b>${tot}</b> ${tot === 1 ? 'jogador abriu' : 'jogadores abriram'} o jogo ${p.filtrado ? '' : 'desde o início '}e <b>${ns[0].jogadores}</b> chegaram a jogar a noite 1${tot ? ' (' + Math.round(ns[0].jogadores / tot * 100) + '%)' : ''}.`);
+  if (ultima > 1) f.push(`Quem foi mais longe chegou à <b>noite ${ultima}</b>.`);
+  // maior perda entre noites
+  let pior = null;
+  for (let i = 0; i < ultima - 1; i++) { const n = ns[i]; if (n.vencedores >= MIN_AMOSTRA) { const s = Math.min(1, ns[i + 1].jogadores / n.vencedores); if (!pior || s < pior.s) pior = { i, s }; } }
+  if (pior) f.push(`<span class="tag ${pior.s < 0.6 ? 'r' : 'v'}">${pior.s < 0.6 ? 'Atenção' : 'Bom sinal'}</span> A maior perda é entre a <b>noite ${pior.i + 1}</b> e a <b>${pior.i + 2}</b>: ${Math.round(pior.s * 100)}% de quem venceu a noite ${pior.i + 1} começou a seguinte.`);
+  // noite mais difícil
+  let dificil = null;
+  ns.forEach((n, i) => { const t = n.vit + n.der; if (t >= MIN_AMOSTRA) { const v = n.vit / t; if (!dificil || v < dificil.v) dificil = { i, v, t }; } });
+  if (dificil && dificil.v < 0.7) f.push(`<span class="tag ${dificil.v < 0.4 ? 'r' : 'a'}">Dificuldade</span> A noite mais difícil é a <b>${dificil.i + 1}</b>: só ${Math.round(dificil.v * 100)}% das ${dificil.t} partidas terminaram em vitória.`);
+  // abandono
+  let ab = null;
+  ns.forEach((n, i) => { if (n.ini >= MIN_AMOSTRA && n.aband) { const a = n.aband / n.ini; if (!ab || a > ab.a) ab = { i, a }; } });
+  if (ab && ab.a >= 0.25) f.push(`<span class="tag a">Abandono</span> Na <b>noite ${ab.i + 1}</b>, ${Math.round(ab.a * 100)}% das partidas foram deixadas no meio${ns[ab.i].tempoAband !== null ? ' (em média aos ' + tempoTxt(ns[ab.i].tempoAband) + ')' : ''}.`);
+  const rs = d.resumo;
+  if (rs.d1 !== null) f.push(`<b>${rs.d1}%</b> dos jogadores novos voltam no dia seguinte${rs.d7 !== null ? ' e <b>' + rs.d7 + '%</b> depois de uma semana' : ''}.`);
+  if (tot < 30) f.push('<span class="tag a">Poucos dados</span> Com tão poucos jogadores os percentuais mudam muito de um dia para o outro.');
+  return f;
+}
+
+let ultimoD = null;
+function desenharFunil() {
+  const d = ultimoD; if (!d) return;
+  const ns = d.noites; let ultima = 1; ns.forEach((n, i) => { if (n.jogadores) ultima = i + 1; });
+  const ver = $('todas').checked ? 24 : ultima, max = Math.max(1, ...ns.map(n => n.jogadores));
+  $('tNoites').className = $('detalhes').checked ? '' : 'sem-det';
+  $('tNoites').innerHTML = '<tr><th>Noite</th><th class="barcel">Começaram</th><th>Venceram</th><th title="Dos que venceram, quantos começaram a noite seguinte">Seguiram</th><th title="Das partidas terminadas, quantas foram vitórias">Taxa de vitória</th><th title="Saíram no meio da noite">Saíram no meio</th><th class="det">Tempo (vitória)</th><th class="det">Tempo (derrota)</th><th class="det">Vida ao vencer</th><th class="det">Desafios cumpridos</th></tr>' +
+    ns.slice(0, ver).map((n, i) => {
+      const prox = ns[i + 1], seg = prox && n.vencedores ? Math.min(1, prox.jogadores / n.vencedores) : null, t = n.vit + n.der, tv = t ? n.vit / t : null;
+      const segC = seg === null || n.vencedores < MIN_AMOSTRA ? '' : seg < 0.6 ? 'r' : seg >= 0.8 ? 'v' : '', vC = tv === null || t < MIN_AMOSTRA ? '' : tv < 0.4 ? 'r' : '';
+      return `<tr><td>${n.n}</td><td class="barcel"><div><span class="bar" style="width:${n.jogadores / max * 100}%"></span>${n.jogadores}</div></td><td>${n.vencedores}</td>
+      <td>${seg === null ? '–' : `<span class="pill ${segC}">${Math.round(seg * 100)}%</span>`}</td><td>${tv === null ? '–' : `<span class="pill ${vC}">${Math.round(tv * 100)}%</span>`}</td>
+      <td>${n.aband ? n.aband + (n.tempoAband !== null ? ' <small class="s">(aos ' + tempoTxt(n.tempoAband) + ')</small>' : '') : '–'}</td>
+      <td class="det">${tempoTxt(n.tempoVit)}</td><td class="det">${tempoTxt(n.tempoDer)}</td><td class="det">${n.vida === null ? '–' : n.vida + '%'}</td><td class="det">${n.desafios === null ? '–' : n.desafios + '%'}</td></tr>`;
+    }).join('');
+}
+$('detalhes').onchange = $('todas').onchange = desenharFunil;
+
 async function carregar() {
-  const r = await fetch('/api/resumo?volta=' + $('volta').value + '&origem=' + $('origem').value, { headers: { 'x-senha': senha } });
+  desenharChips();
+  const q = new URLSearchParams({ volta: $('volta').value, origem: $('origem').value }); if (estado.de || estado.ate) { q.set('de', estado.de || estado.ate); q.set('ate', estado.ate || estado.de); }
+  const r = await fetch('/api/resumo?' + q, { headers: { 'x-senha': senha } });
   const d = await r.json().catch(() => ({}));
   if (!r.ok) { $('msg').textContent = d.erro || 'Erro ao carregar.'; $('entrar').hidden = false; $('conteudo').hidden = true; return; }
+  ultimoD = d; const p = d.periodo;
   $('entrar').hidden = true; $('conteudo').hidden = false; $('semBanco').hidden = d.configurado;
-  $('nTotal').textContent = d.total; $('nHoje').textContent = d.porDia[d.porDia.length - 1].jogadores;
-  $('n24').textContent = d.noites[23].jogadores; $('v24').textContent = d.noites[23].vencedores;
-  const rs = d.resumo || {}, ou = (v, suf) => v === null || v === undefined ? '–' : v + suf;
-  $('cMin').textContent = ou(rs.minutos, ' min'); $('cD1').textContent = ou(rs.d1, '%'); $('cD7').textContent = ou(rs.d7, '%'); $('cCel').textContent = ou(rs.celular, '%');
-  $('cCarga').textContent = 'celular ' + ou(rs.cargaCel, ' s') + ' · pc ' + ou(rs.cargaPc, ' s');
-  const max = Math.max(1, ...d.noites.map(n => n.jogadores));
-  $('tNoites').innerHTML = '<tr><th>Noite</th><th class="barcel" style="text-align:left">Jogadores</th><th>Venceram</th><th>Seguiram</th><th>% vitória</th><th>Partidas</th><th>Abandonos</th><th>Tempo (vitória)</th><th>Tempo (derrota)</th><th>Vida ao vencer</th><th>Desafios</th></tr>' +
-    d.noites.map((n, i) => { const prox = d.noites[i + 1], seg = prox && n.vencedores ? prox.jogadores / n.vencedores : null;
-      return `<tr><td>${n.n}</td><td class="barcel"><div><span class="bar" style="width:${n.jogadores / max * 100}%"></span>${n.jogadores}</div></td><td>${n.vencedores}</td>
-      <td class="${seg === null ? '' : seg < 0.6 ? 'queda' : 'ok'}">${seg === null ? '–' : Math.round(Math.min(1, seg) * 100) + '%'}</td><td>${pct(n.vit, n.vit + n.der)}</td><td>${n.vit + n.der}</td><td>${n.aband ? n.aband + ' <small style="color:var(--suave)">(' + n.tempoAband + ' s)</small>' : '–'}</td>
-      <td>${n.tempoVit === null ? '–' : n.tempoVit + ' s'}</td><td>${n.tempoDer === null ? '–' : n.tempoDer + ' s'}</td><td>${n.vida === null ? '–' : n.vida + '%'}</td><td>${n.desafios === null ? '–' : n.desafios + '%'}</td></tr>`; }).join('');
+  const ORIG = { todos: 'todas as origens', cg: 'só CrazyGames', fora: 'só fora da CrazyGames' };
+  $('mostrando').innerHTML = `Mostrando <b>${periodoTxt(p)}</b> · ${ORIG[d.origem]} · volta ${d.volta}`;
+  // aviso: o detalhe por noite só existe a partir do primeiro dia com dados diários
+  const nota = $('notaDetalhe');
+  if (p.filtrado && p.primeiroDetalhe && p.de < p.primeiroDetalhe) { nota.hidden = false; nota.textContent = `O funil por noite só existe a partir de ${dm(p.primeiroDetalhe)} (quando o filtro por dia entrou no ar). Antes disso há só os números gerais, então esses dias aparecem zerados no funil.`; }
+  else if (p.filtrado && !p.primeiroDetalhe) { nota.hidden = false; nota.textContent = 'Ainda não chegou nenhum dado com detalhe por dia. Atualize o jogo/painel e jogue uma noite para começar a encher.'; }
+  else nota.hidden = true;
+  $('frases').innerHTML = frases(d).map(x => `<li>${x}</li>`).join('');
+  const rs = d.resumo, n24 = d.noites[23];
+  $('nTotal').textContent = d.total; $('hTotal').textContent = p.filtrado ? 'que abriram o jogo no período' : 'que abriram o jogo desde o início';
+  $('v24').textContent = n24.vencedores; $('h24').textContent = n24.jogadores + ' chegaram à noite 24';
+  $('cMin').textContent = rs.minutos === null ? '–' : rs.minutos + ' min'; $('cD1').textContent = rs.d1 === null ? '–' : rs.d1 + '%'; $('cD7').textContent = rs.d7 === null ? '–' : rs.d7 + '%'; $('cCel').textContent = rs.celular === null ? '–' : rs.celular + '%';
+  $('cCarga').textContent = 'celular ' + (rs.cargaCel === null ? '–' : rs.cargaCel + ' s') + ' · pc ' + (rs.cargaPc === null ? '–' : rs.cargaPc + ' s');
+  desenharFunil();
   const maxD = Math.max(1, ...d.porDia.map(x => x.jogadores));
-  $('dias').innerHTML = d.porDia.map(x => `<div><b>${x.jogadores}</b><i style="height:${x.jogadores / maxD * 100}%"></i>${x.dia.slice(8)}/${x.dia.slice(5, 7)}</div>`).join('');
-  $('tDias').innerHTML = '<tr><th>Dia</th><th>Jogadores</th><th>Novos</th><th>D1</th><th>D7</th><th>Minutos</th></tr>' + d.porDia.slice().reverse().map(x => `<tr><td>${x.dia.slice(8)}/${x.dia.slice(5, 7)}</td><td>${x.jogadores}</td><td>${x.novos}</td><td>${x.d1 === null ? '–' : x.d1 + '%'}</td><td>${x.d7 === null ? '–' : x.d7 + '%'}</td><td>${x.minutos === null ? '–' : x.minutos}</td></tr>`).join('');
+  $('dias').innerHTML = d.porDia.map(x => `<button type="button" class="dia ${p.filtrado && p.de === p.ate && x.dia === p.de ? 'on' : ''}" data-dia="${x.dia}" title="${dm(x.dia)}: ${x.jogadores} jogadores, ${x.novos} novos"><b>${x.jogadores}</b><i style="height:${x.jogadores / maxD * 100}%"></i>${dm(x.dia)}</button>`).join('');
+  $('tDias').innerHTML = '<tr><th>Dia</th><th>Jogadores</th><th>Novos</th><th>D1</th><th>D7</th><th>Minutos</th></tr>' + d.porDia.slice().reverse().map(x => `<tr><td>${dm(x.dia)}</td><td>${x.jogadores}</td><td>${x.novos}</td><td>${x.d1 === null ? '–' : x.d1 + '%'}</td><td>${x.d7 === null ? '–' : x.d7 + '%'}</td><td>${num(x.minutos)}</td></tr>`).join('');
   const NOMES = { cad: 'Cadência', vida: 'Trenó', rena: 'Rena', carga: 'Recarga da rena', saco: 'Saco maior' };
-  $('tCompras').innerHTML = (d.compras || []).length ? '<tr><th>Melhoria</th><th>Compras</th><th>Noite média</th></tr>' + d.compras.map(c => `<tr><td>${esc(NOMES[c.k] || c.k)}</td><td>${c.vezes}</td><td>${c.noiteMedia ?? '–'}</td></tr>`).join('') : '<tr><td>Nenhuma compra ainda.</td></tr>';
+  $('tCompras').innerHTML = (d.compras || []).length ? '<tr><th>Melhoria</th><th>Compras</th><th>Noite média</th></tr>' + d.compras.map(c => `<tr><td>${esc(NOMES[c.k] || c.k)}</td><td>${c.vezes}</td><td>${num(c.noiteMedia)}</td></tr>`).join('') : '<tr><td>Nenhuma compra neste período.</td></tr>';
   $('erros').innerHTML = d.erros.length ? d.erros.slice(0, 15).map(e => `<li><small>${e.t ? new Date(e.t).toLocaleString('pt-BR') : ''}</small>${esc(e.m)}</li>`).join('') : '<li>Nenhum erro registrado.</li>';
   const ec = Object.entries(d.errosCont).sort((a, b) => b[1] - a[1]).slice(0, 10);
   $('tErros').innerHTML = ec.length ? '<tr><th>Erro (mais frequentes)</th><th>Vezes</th></tr>' + ec.map(([m, c]) => `<tr><td style="white-space:normal;text-align:left">${esc(m)}</td><td>${c}</td></tr>`).join('') : '';
@@ -115,7 +233,7 @@ $('fSenha').onsubmit = e => { e.preventDefault(); senha = $('senha').value; try 
 $('volta').onchange = carregar;
 $('origem').onchange = () => { try { sessionStorage.setItem('origemPainel', $('origem').value); } catch (e) {} carregar(); };
 try { const o = sessionStorage.getItem('origemPainel'); if (o) $('origem').value = o; } catch (e) {}
-$('sair').onclick = () => { senha = ''; try { sessionStorage.removeItem('senhaPainel'); } catch (e) {} $('entrar').hidden = false; $('conteudo').hidden = true; };
+$('sair').onclick = () => { senha = ''; try { sessionStorage.removeItem('senhaPainel'); } catch (x) {} $('entrar').hidden = false; $('conteudo').hidden = true; };
 if (senha) carregar();
 </script>
 </body>
