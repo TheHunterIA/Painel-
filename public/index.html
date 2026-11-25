@@ -3,184 +3,120 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#101a2d">
-<title>Save the Holidays · Telemetria</title>
+<title>Painel do Save the Holidays</title>
 <style>
-:root{color-scheme:light;--bg:#f3f5f9;--surface:#fff;--ink:#172238;--muted:#718096;--line:#e5eaf1;--navy:#101a2d;--blue:#4778e8;--blue2:#eaf0ff;--green:#16845d;--red:#c94b55;--amber:#9a6a16;--shadow:0 8px 28px rgba(20,35,60,.055)}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
-button,input,select{font:inherit}button{cursor:pointer}
-.shell{max-width:1440px;margin:auto;padding:28px 28px 56px}
-.hero{background:linear-gradient(120deg,#111d33,#1b3155 68%,#28477a);color:#fff;border-radius:20px;padding:26px 30px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:20px;box-shadow:0 14px 36px rgba(20,40,75,.14)}
-.brand{display:flex;align-items:center;gap:15px}.mark{width:48px;height:48px;border-radius:15px;background:rgba(255,255,255,.12);display:grid;place-items:center;font-size:25px}
-h1{font-size:22px;letter-spacing:-.5px;margin:0;font-weight:750}.hero p{color:#c5d2e7;margin:4px 0 0;font-size:13px}.hero-meta{color:#d8e4f5;font-size:12px;text-align:right}
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
-#entrar{max-width:440px;margin:12vh auto;padding:24px}#entrar h2{margin:0 0 6px}#entrar p{color:var(--muted);margin:0 0 18px}
-form{display:flex;gap:9px;flex-wrap:wrap}input,select{background:#fff;color:var(--ink);border:1px solid #dce3ed;border-radius:9px;padding:10px 12px;outline:none}input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px #4778e81a}
-button.primary{background:var(--blue);color:#fff;border:0;border-radius:9px;padding:10px 16px;font-weight:650}button.ghost{background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:9px 13px}
-button:disabled{opacity:.55;cursor:wait}
-.toolbar{padding:16px 18px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
-.filters{display:flex;align-items:end;gap:12px;flex-wrap:wrap}.field{display:flex;flex-direction:column;gap:5px}.field label{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700}
-.field input,.field select{min-height:39px}.datefield input{width:150px}.quick{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.quick button{font-size:12px;padding:7px 10px;background:#f7f9fc;border:1px solid var(--line);border-radius:8px;color:#526078}.quick button.active{background:var(--blue2);border-color:#cbd9ff;color:#315ec5;font-weight:700}
-.toolbar-actions{display:flex;gap:8px;align-items:center}.status{font-size:12px;color:var(--muted)}
-.notice{padding:12px 15px;margin-bottom:18px;background:#fff8e9;border:1px solid #f1dfb9;border-radius:11px;color:#79591f;font-size:12px}
-.section-head{display:flex;justify-content:space-between;align-items:end;margin:25px 2px 12px;gap:12px}.section-head h2{font-size:16px;margin:0;letter-spacing:-.2px}.section-head p{margin:2px 0 0;color:var(--muted);font-size:12px}
-.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.kpi{padding:17px 18px;min-height:112px;position:relative;overflow:hidden}.kpi .label{font-size:12px;color:var(--muted);font-weight:600}.kpi strong{display:block;font-size:27px;letter-spacing:-.8px;margin-top:8px;line-height:1.1}.kpi small{display:block;color:var(--muted);font-size:11px;margin-top:7px}.kpi .dot{position:absolute;right:17px;top:18px;width:8px;height:8px;border-radius:50%;background:#83a5f8}
-.grid-two{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,.85fr);gap:14px}.card{padding:18px;margin-bottom:14px;min-width:0}.card h3{font-size:14px;margin:0 0 4px}.card .desc{color:var(--muted);font-size:12px;margin:0 0 16px}
-.chart{height:190px;display:flex;align-items:stretch;gap:5px;padding:8px 0 0;border-bottom:1px solid var(--line)}.daycol{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:6px}.daycol .val{font-size:10px;color:#56647a}.daycol .barwrap{height:145px;width:100%;display:flex;align-items:end;justify-content:center}.daycol i{width:min(25px,75%);min-height:2px;background:linear-gradient(180deg,#7297f4,#4778e8);border-radius:5px 5px 2px 2px}.daycol .date{font-size:10px;color:var(--muted);white-space:nowrap}
-.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}th,td{padding:10px 11px;border-bottom:1px solid #edf0f5;text-align:right;white-space:nowrap}th{font-size:10px;text-transform:uppercase;letter-spacing:.055em;color:#7c8799;font-weight:750;background:#fafbfd}th:first-child,td:first-child{text-align:left}tbody tr:hover{background:#fafcff}.barcell{min-width:140px}.inlinebar{display:flex;align-items:center;gap:9px}.inlinebar i{height:7px;border-radius:8px;background:#7297f4;display:block;min-width:2px}
-.pill{display:inline-block;padding:3px 7px;border-radius:20px;font-size:10px;font-weight:700;background:#edf7f2;color:var(--green)}.pill.low{background:#fff0f0;color:var(--red)}
-.empty{padding:20px;text-align:center;color:var(--muted)}
-.list{margin:0;padding-left:18px}.list li{padding:6px 0;font:12px ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhere;border-bottom:1px solid #f0f2f6}.list time{display:block;color:var(--muted);font:10px system-ui;margin-bottom:2px}
-.two-tables{display:grid;grid-template-columns:1fr 1fr;gap:14px}.subtle{color:var(--muted)}.error{color:var(--red);font-size:12px;margin-top:10px}.foot{color:#8b95a5;text-align:center;font-size:11px;padding:18px}
-[hidden]{display:none!important}
-@media(max-width:950px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.grid-two{grid-template-columns:1fr}.two-tables{grid-template-columns:1fr}}
-@media(max-width:600px){.shell{padding:14px 12px 36px}.hero{padding:19px;border-radius:15px}.hero-meta{display:none}.toolbar{padding:14px}.filters{width:100%}.datefield{flex:1}.datefield input{width:100%}.quick{width:100%}.toolbar-actions{width:100%;justify-content:space-between}.kpis{gap:8px}.kpi{padding:13px;min-height:100px}.kpi strong{font-size:23px}.card{padding:14px}.section-head{margin-top:21px}}
+  :root { --fundo: #f6f7fb; --cartao: #fff; --texto: #1b2233; --suave: #667089; --linha: #e3e6ef; --barra: #3b6fe0; --barra2: #9db8f2; --bom: #1f9d55; --ruim: #d6453d; }
+  @media (prefers-color-scheme: dark) { :root { --fundo: #0f1420; --cartao: #182033; --texto: #e8ecf6; --suave: #98a2bb; --linha: #2a3550; --barra: #6f9bff; --barra2: #34507f; --bom: #4cc27a; --ruim: #ff7a70; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--fundo); color: var(--texto); font: 15px/1.45 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 48px; }
+  h1 { font-size: 22px; margin: 0 0 4px; } h2 { font-size: 17px; margin: 0 0 10px; }
+  .sub { color: var(--suave); margin: 0 0 18px; }
+  .cartao { background: var(--cartao); border: 1px solid var(--linha); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .numeros { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .numeros .cartao { margin: 0; } .numeros b { display: block; font-size: 26px; } .numeros span { color: var(--suave); font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--linha); white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; } th { color: var(--suave); font-weight: 600; font-size: 13px; }
+  .rolar { overflow-x: auto; }
+  .bar { height: 10px; border-radius: 5px; background: var(--barra); min-width: 2px; }
+  .barcel { width: 32%; min-width: 120px; } .barcel div { display: flex; align-items: center; gap: 8px; }
+  .queda { color: var(--ruim); font-weight: 600; } .ok { color: var(--bom); }
+  .dias { display: flex; align-items: flex-end; gap: 6px; height: 140px; }
+  .dias div { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; font-size: 11px; color: var(--suave); }
+  .dias i { display: block; width: 100%; background: var(--barra); border-radius: 4px 4px 0 0; min-height: 2px; }
+  .dias b { color: var(--texto); font-size: 12px; }
+  .erros li { margin-bottom: 6px; font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; word-break: break-word; }
+  .erros small { color: var(--suave); margin-right: 6px; }
+  form { display: flex; gap: 8px; flex-wrap: wrap; }
+  input, select, button { font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--linha); background: var(--cartao); color: var(--texto); }
+  button { background: var(--barra); color: #fff; border: 0; cursor: pointer; }
+  .aviso { color: var(--ruim); } .topo { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .dica { color: var(--suave); font-size: 13px; margin-top: 8px; }
 </style>
 </head>
 <body>
-<div class="shell">
-  <header class="hero">
-    <div class="brand"><div class="mark">🎄</div><div><h1>Save the Holidays</h1><p>Painel de telemetria · visão de desempenho</p></div></div>
-    <div class="hero-meta">DADOS ANÔNIMOS DO JOGO<br><span id="atualizado">Aguardando conexão</span></div>
-  </header>
+<main>
+  <h1>Save the Holidays — painel</h1>
+  <p class="sub">Números anônimos enviados pelo jogo. Atualize a página para ver os mais recentes. <b>Origem</b>: dentro da CrazyGames ou fora dela (endereço direto, link compartilhado); o que chegou antes da separação aparece como "fora".</p>
 
-  <section id="entrar" class="panel" hidden>
-    <h2>Acesso ao painel</h2><p>Informe a senha de administração para visualizar a telemetria.</p>
-    <form id="fSenha"><input id="senha" type="password" placeholder="Senha do painel" autocomplete="current-password" required style="flex:1;min-width:180px"><button class="primary">Entrar</button></form>
-    <div id="msg" class="error"></div>
-  </section>
+  <div id="entrar" class="cartao">
+    <form id="fSenha"><input id="senha" type="password" placeholder="Senha do painel" autocomplete="current-password" required><button>Entrar</button></form>
+    <p id="msg" class="aviso"></p>
+  </div>
 
   <div id="conteudo" hidden>
-    <section class="panel toolbar">
-      <div class="filters">
-        <div class="field datefield"><label for="de">Data inicial</label><input id="de" type="date"></div>
-        <div class="field datefield"><label for="ate">Data final</label><input id="ate" type="date"></div>
-        <div class="field"><label for="origem">Origem</label><select id="origem"><option value="todos">Todas</option><option value="cg">CrazyGames</option><option value="fora">Externa</option></select></div>
-        <div class="field"><label for="ambiente">Ambiente</label><select id="ambiente"><option value="prod" selected>Produção</option><option value="preview">Preview / testes</option><option value="todos">Todos</option></select></div>
-        <div class="field"><label for="volta">Volta</label><select id="volta"></select></div>
-      </div>
-      <div class="toolbar-actions">
-        <div class="quick">
-          <button data-range="7">7 dias</button><button data-range="14" class="active">14 dias</button><button data-range="30">30 dias</button>
-        </div>
-        <button id="aplicar" class="primary">Aplicar</button><button id="atualizar" class="ghost" title="Atualizar dados">↻</button>
-        <button id="sair" class="ghost">Sair</button>
-      </div>
-      <div id="status" class="status" style="width:100%">Período de até 90 dias · datas em UTC</div>
-    </section>
-
-    <div id="semBanco" class="notice" hidden>O Redis não está conectado. Os dados de teste ficam apenas na memória e são perdidos quando a função reinicia.</div>
-    <div class="notice">A partir desta versão, as métricas são agregadas diariamente. Dados antigos que só existiam em contadores acumulados não podem ser distribuídos retroativamente por data; por isso, métricas detalhadas do período começam a contar após a implantação desta atualização.</div>
-
-    <div class="section-head"><div><h2>Visão geral</h2><p id="periodoLabel">Resumo do período selecionado</p></div></div>
-    <section class="kpis">
-      <article class="panel kpi"><span class="dot"></span><div class="label">Sessões / jogadores-dia</div><strong id="nTotal">—</strong><small>Somatório diário no período</small></article>
-      <article class="panel kpi"><span class="dot"></span><div class="label">Jogadores no último dia</div><strong id="nHoje">—</strong><small>Última data do intervalo</small></article>
-      <article class="panel kpi"><span class="dot"></span><div class="label">Chegaram à noite 24</div><strong id="n24">—</strong><small>Inícios registrados no período</small></article>
-      <article class="panel kpi"><span class="dot"></span><div class="label">Venceram a noite 24</div><strong id="v24">—</strong><small>Vitórias registradas no período</small></article>
-      <article class="panel kpi"><span class="dot"></span><div class="label">Tempo médio por jogador</div><strong id="cMin">—</strong><small>Minutos com o jogo visível</small></article>
-      <article class="panel kpi"><span class="dot"></span><div class="label">Retenção D1</div><strong id="cD1">—</strong><small>Retorno no dia seguinte</small></article>
-      <article class="panel kpi"><span class="dot"></span><div class="label">Retenção D7</div><strong id="cD7">—</strong><small>Retorno sete dias depois</small></article>
-      <article class="panel kpi"><span class="dot"></span><div class="label">Participação mobile</div><strong id="cCel">—</strong><small>Celular entre dispositivos identificados</small></article>
-    </section>
-
-    <div class="section-head"><div><h2>Atividade diária</h2><p>Jogadores únicos por dia e indicadores de retorno</p></div></div>
-    <div class="grid-two">
-      <section class="panel card"><h3>Jogadores por dia</h3><p class="desc">Cada coluna representa um dia dentro do intervalo escolhido.</p><div id="dias" class="chart"></div></section>
-      <section class="panel card"><h3>Desempenho técnico</h3><p class="desc">Tempo médio de carregamento por dispositivo.</p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:22px 0">
-          <div><div class="subtle" style="font-size:11px">CELULAR</div><strong id="cCargaCel" style="font-size:26px">—</strong><div class="subtle" style="font-size:11px">segundos</div></div>
-          <div><div class="subtle" style="font-size:11px">COMPUTADOR</div><strong id="cCargaPc" style="font-size:26px">—</strong><div class="subtle" style="font-size:11px">segundos</div></div>
-        </div><div class="subtle" style="font-size:12px">Médias calculadas apenas com eventos de carregamento registrados no período.</div>
-      </section>
+    <div class="topo">
+      <div style="display:flex;gap:14px;flex-wrap:wrap"><label>Origem <select id="origem"><option value="todos">Todos</option><option value="cg">CrazyGames</option><option value="fora">Fora da CrazyGames</option></select></label>
+      <label>Volta <select id="volta"></select></label></div>
+      <button id="sair" type="button" style="background:none;color:var(--suave);border:1px solid var(--linha)">Sair</button>
+    </div>
+    <p id="semBanco" class="aviso" hidden>O banco ainda não está conectado: os dados abaixo somem a cada nova implantação. Instale o Upstash Redis no Vercel (veja o LEIA-ME).</p>
+    <div class="numeros">
+      <div class="cartao"><span>Jogadores (total)</span><b id="nTotal">–</b></div>
+      <div class="cartao"><span>Jogadores hoje (UTC)</span><b id="nHoje">–</b></div>
+      <div class="cartao"><span>Chegaram à noite 24</span><b id="n24">–</b></div>
+      <div class="cartao"><span>Venceram a noite 24</span><b id="v24">–</b></div>
+      <div class="cartao"><span>Tempo médio por jogador (7 dias)</span><b id="cMin">–</b></div>
+      <div class="cartao"><span>Voltaram no dia seguinte (D1, 7 dias)</span><b id="cD1">–</b></div>
+      <div class="cartao"><span>Voltaram 7 dias depois (D7)</span><b id="cD7">–</b></div>
+      <div class="cartao"><span>Jogando no celular</span><b id="cCel">–</b></div>
+      <div class="cartao"><span>Carregamento médio</span><b id="cCarga" style="font-size:20px">–</b></div>
     </div>
 
-    <div class="section-head"><div><h2>Progressão da campanha</h2><p>Funil por noite, filtrado pela volta selecionada e pelo período</p></div></div>
-    <section class="panel card"><div class="table-wrap"><table id="tNoites"></table></div><p class="desc" style="margin:13px 0 0">“Seguiram” compara os jogadores que venceram uma noite com os que iniciaram a seguinte dentro do mesmo período. Desafios considera os dois objetivos possíveis por vitória.</p></section>
-
-    <div class="section-head"><div><h2>Detalhamento diário</h2><p>Novos jogadores, retenção e duração da sessão</p></div></div>
-    <section class="panel card"><div class="table-wrap"><table id="tDias"></table></div></section>
-
-    <div class="section-head"><div><h2>Eventos e economia</h2><p>Compras, erros e eventos personalizados no intervalo selecionado</p></div></div>
-    <div class="two-tables">
-      <section class="panel card"><h3>Compras na Oficina</h3><p class="desc">Volume de compras e noite média da campanha.</p><div class="table-wrap"><table id="tCompras"></table></div></section>
-      <section class="panel card"><h3>Outros eventos</h3><p class="desc">Quantidade de eventos recebidos no período.</p><div class="table-wrap"><table id="tEventos"></table></div></section>
+    <div class="cartao">
+      <h2>Funil por noite</h2>
+      <div class="rolar"><table id="tNoites"></table></div>
+      <p class="dica"><b>Jogadores</b>: quantos começaram a noite (cada sessão conta uma vez). <b>Seguiram</b>: dos que venceram, quantos começaram a noite seguinte — números baixos mostram onde as pessoas param. <b>% vitória</b>: das partidas terminadas. <b>Abandonos</b>: saíram no meio da noite (voltaram ao menu ou fecharam o jogo), com o tempo médio em que saíram. <b>Desafios</b>: dos desafios possíveis nas vitórias, quantos foram cumpridos.</p>
     </div>
-    <div class="section-head"><div><h2>Diagnóstico de erros</h2><p>Ocorrências observadas no período selecionado</p></div></div>
-    <div class="two-tables">
-      <section class="panel card"><h3>Erros mais frequentes</h3><div class="table-wrap"><table id="tErros"></table></div></section>
-      <section class="panel card"><h3>Erros recentes</h3><ol class="list" id="erros"></ol></section>
-    </div>
+
+    <div class="cartao"><h2>Jogadores por dia (últimos 14 dias)</h2><div class="dias" id="dias"></div><div class="rolar" style="margin-top:12px"><table id="tDias"></table></div>
+      <p class="dica"><b>Novos</b>: primeira vez no jogo. <b>D1</b>: dos novos do dia anterior, quantos voltaram neste dia. <b>D7</b>: dos novos de 7 dias antes, quantos voltaram neste dia. <b>Minutos</b>: tempo médio de jogo por jogador (só com o jogo visível).</p></div>
+    <div class="cartao"><h2>Compras na Oficina</h2><div class="rolar"><table id="tCompras"></table></div><p class="dica"><b>Noite média</b>: em que ponto da campanha, em média, a melhoria é comprada.</p></div>
+    <div class="cartao"><h2>Erros mais recentes</h2><ol class="erros" id="erros"></ol><div class="rolar"><table id="tErros"></table></div></div>
+    <div class="cartao"><h2>Outros eventos</h2><div class="rolar"><table id="tEventos"></table></div></div>
   </div>
-  <footer class="foot">Save the Holidays · Telemetria anônima · Horários e datas em UTC</footer>
-</div>
+</main>
 <script>
 const $ = id => document.getElementById(id);
-const pct = (a,b) => b ? Math.round(a/b*100)+'%' : '—';
-const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const fmt = n => Number(n||0).toLocaleString('pt-BR');
-const isoToday = () => new Date().toISOString().slice(0,10);
-const shift = (day,delta) => { const d=new Date(day+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+delta); return d.toISOString().slice(0,10); };
-let senha=''; try{senha=sessionStorage.getItem('senhaPainel')||'';}catch{}
-for(let v=1;v<=5;v++) $('volta').insertAdjacentHTML('beforeend',`<option value="${v}">${v}</option>`);
-$('ate').value=isoToday(); $('de').value=shift(isoToday(),-13); $('de').max=isoToday(); $('ate').max=isoToday();
+const pct = (a, b) => b ? Math.round(a / b * 100) + '%' : '–';
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let senha = ''; try { senha = sessionStorage.getItem('senhaPainel') || ''; } catch (e) {}
+for (let v = 1; v <= 5; v++) $('volta').insertAdjacentHTML('beforeend', `<option value="${v}">${v}</option>`);
 
-function escolherPeriodo(qtd){
-  $('ate').value=isoToday(); $('de').value=shift(isoToday(),-(qtd-1));
-  document.querySelectorAll('[data-range]').forEach(b=>b.classList.toggle('active',+b.dataset.range===qtd));
+async function carregar() {
+  const r = await fetch('/api/resumo?volta=' + $('volta').value + '&origem=' + $('origem').value, { headers: { 'x-senha': senha } });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) { $('msg').textContent = d.erro || 'Erro ao carregar.'; $('entrar').hidden = false; $('conteudo').hidden = true; return; }
+  $('entrar').hidden = true; $('conteudo').hidden = false; $('semBanco').hidden = d.configurado;
+  $('nTotal').textContent = d.total; $('nHoje').textContent = d.porDia[d.porDia.length - 1].jogadores;
+  $('n24').textContent = d.noites[23].jogadores; $('v24').textContent = d.noites[23].vencedores;
+  const rs = d.resumo || {}, ou = (v, suf) => v === null || v === undefined ? '–' : v + suf;
+  $('cMin').textContent = ou(rs.minutos, ' min'); $('cD1').textContent = ou(rs.d1, '%'); $('cD7').textContent = ou(rs.d7, '%'); $('cCel').textContent = ou(rs.celular, '%');
+  $('cCarga').textContent = 'celular ' + ou(rs.cargaCel, ' s') + ' · pc ' + ou(rs.cargaPc, ' s');
+  const max = Math.max(1, ...d.noites.map(n => n.jogadores));
+  $('tNoites').innerHTML = '<tr><th>Noite</th><th class="barcel" style="text-align:left">Jogadores</th><th>Venceram</th><th>Seguiram</th><th>% vitória</th><th>Partidas</th><th>Abandonos</th><th>Tempo (vitória)</th><th>Tempo (derrota)</th><th>Vida ao vencer</th><th>Desafios</th></tr>' +
+    d.noites.map((n, i) => { const prox = d.noites[i + 1], seg = prox && n.vencedores ? prox.jogadores / n.vencedores : null;
+      return `<tr><td>${n.n}</td><td class="barcel"><div><span class="bar" style="width:${n.jogadores / max * 100}%"></span>${n.jogadores}</div></td><td>${n.vencedores}</td>
+      <td class="${seg === null ? '' : seg < 0.6 ? 'queda' : 'ok'}">${seg === null ? '–' : Math.round(Math.min(1, seg) * 100) + '%'}</td><td>${pct(n.vit, n.vit + n.der)}</td><td>${n.vit + n.der}</td><td>${n.aband ? n.aband + ' <small style="color:var(--suave)">(' + n.tempoAband + ' s)</small>' : '–'}</td>
+      <td>${n.tempoVit === null ? '–' : n.tempoVit + ' s'}</td><td>${n.tempoDer === null ? '–' : n.tempoDer + ' s'}</td><td>${n.vida === null ? '–' : n.vida + '%'}</td><td>${n.desafios === null ? '–' : n.desafios + '%'}</td></tr>`; }).join('');
+  const maxD = Math.max(1, ...d.porDia.map(x => x.jogadores));
+  $('dias').innerHTML = d.porDia.map(x => `<div><b>${x.jogadores}</b><i style="height:${x.jogadores / maxD * 100}%"></i>${x.dia.slice(8)}/${x.dia.slice(5, 7)}</div>`).join('');
+  $('tDias').innerHTML = '<tr><th>Dia</th><th>Jogadores</th><th>Novos</th><th>D1</th><th>D7</th><th>Minutos</th></tr>' + d.porDia.slice().reverse().map(x => `<tr><td>${x.dia.slice(8)}/${x.dia.slice(5, 7)}</td><td>${x.jogadores}</td><td>${x.novos}</td><td>${x.d1 === null ? '–' : x.d1 + '%'}</td><td>${x.d7 === null ? '–' : x.d7 + '%'}</td><td>${x.minutos === null ? '–' : x.minutos}</td></tr>`).join('');
+  const NOMES = { cad: 'Cadência', vida: 'Trenó', rena: 'Rena', carga: 'Recarga da rena', saco: 'Saco maior' };
+  $('tCompras').innerHTML = (d.compras || []).length ? '<tr><th>Melhoria</th><th>Compras</th><th>Noite média</th></tr>' + d.compras.map(c => `<tr><td>${esc(NOMES[c.k] || c.k)}</td><td>${c.vezes}</td><td>${c.noiteMedia ?? '–'}</td></tr>`).join('') : '<tr><td>Nenhuma compra ainda.</td></tr>';
+  $('erros').innerHTML = d.erros.length ? d.erros.slice(0, 15).map(e => `<li><small>${e.t ? new Date(e.t).toLocaleString('pt-BR') : ''}</small>${esc(e.m)}</li>`).join('') : '<li>Nenhum erro registrado.</li>';
+  const ec = Object.entries(d.errosCont).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  $('tErros').innerHTML = ec.length ? '<tr><th>Erro (mais frequentes)</th><th>Vezes</th></tr>' + ec.map(([m, c]) => `<tr><td style="white-space:normal;text-align:left">${esc(m)}</td><td>${c}</td></tr>`).join('') : '';
+  const ev = Object.entries(d.eventos).sort((a, b) => b[1] - a[1]);
+  $('tEventos').innerHTML = '<tr><th>Evento</th><th>Vezes</th></tr>' + ev.map(([k, v]) => `<tr><td>${esc(k)}</td><td>${v}</td></tr>`).join('');
 }
-document.querySelectorAll('[data-range]').forEach(b=>b.onclick=()=>{escolherPeriodo(+b.dataset.range);carregar();});
-$('aplicar').onclick=carregar; $('atualizar').onclick=carregar;
-$('origem').onchange=carregar; $('ambiente').onchange=carregar; $('volta').onchange=carregar;
-$('de').onchange=()=>document.querySelectorAll('[data-range]').forEach(b=>b.classList.remove('active'));
-$('ate').onchange=()=>document.querySelectorAll('[data-range]').forEach(b=>b.classList.remove('active'));
-
-async function carregar(){
-  if(!senha){$('entrar').hidden=false;$('conteudo').hidden=true;return;}
-  const inicio=$('de').value, fim=$('ate').value;
-  if(!inicio||!fim){$('status').textContent='Selecione as duas datas.';return;}
-  if(inicio>fim){$('status').textContent='A data inicial deve ser anterior à data final.';return;}
-  if((Date.parse(fim+'T00:00:00Z')-Date.parse(inicio+'T00:00:00Z'))/864e5>89){$('status').textContent='Selecione um intervalo de até 90 dias.';return;}
-  $('aplicar').disabled=true;$('atualizar').disabled=true;$('status').textContent='Atualizando dados…';
-  try{
-    const qs=new URLSearchParams({de:inicio,ate:fim,volta:$('volta').value,origem:$('origem').value,ambiente:$('ambiente').value});
-    const r=await fetch('/api/resumo?'+qs,{headers:{'x-senha':senha}});
-    const d=await r.json().catch(()=>({}));
-    if(!r.ok){if(r.status===401){senha='';try{sessionStorage.removeItem('senhaPainel')}catch{}}
-      $('msg').textContent=d.erro||'Não foi possível carregar os dados.';$('entrar').hidden=false;$('conteudo').hidden=true;return;}
-    $('entrar').hidden=true;$('conteudo').hidden=false;$('semBanco').hidden=!!d.configurado;
-    render(d);$('atualizado').textContent='Atualizado às '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    $('status').textContent=`${d.diasSelecionados} dia(s) no intervalo · ${d.inicio} até ${d.fim}`;
-  }catch(e){$('status').textContent='Falha de conexão. Tente atualizar.';}
-  finally{$('aplicar').disabled=false;$('atualizar').disabled=false;}
-}
-function render(d){
-  const rs=d.resumo||{}, last=d.porDia[d.porDia.length-1]||{};
-  const val=(v,s='')=>v===null||v===undefined?'—':v+s;
-  $('periodoLabel').textContent=`${new Date(d.inicio+'T00:00:00Z').toLocaleDateString('pt-BR',{timeZone:'UTC'})} a ${new Date(d.fim+'T00:00:00Z').toLocaleDateString('pt-BR',{timeZone:'UTC'})} · origem: ${d.origem==='cg'?'CrazyGames':d.origem==='fora'?'Externa':'todas'} · ambiente: ${d.ambiente==='preview'?'Preview':d.ambiente==='todos'?'todos':'Produção'} · volta ${d.volta}`;
-  $('nTotal').textContent=fmt(d.total);$('nHoje').textContent=fmt(last.jogadores);
-  $('n24').textContent=fmt(d.noites[23]?.jogadores);$('v24').textContent=fmt(d.noites[23]?.vencedores);
-  $('cMin').textContent=val(rs.minutos,' min');$('cD1').textContent=val(rs.d1,'%');$('cD7').textContent=val(rs.d7,'%');$('cCel').textContent=val(rs.celular,'%');
-  $('cCargaCel').textContent=val(rs.cargaCel);$('cCargaPc').textContent=val(rs.cargaPc);
-  const max=Math.max(1,...d.noites.map(x=>x.jogadores));
-  $('tNoites').innerHTML='<thead><tr><th>Noite</th><th class="barcell">Jogadores</th><th>Venceram</th><th>Seguiram</th><th>Vitória</th><th>Partidas</th><th>Abandonos</th><th>Tempo vitória</th><th>Tempo derrota</th><th>Vida ao vencer</th><th>Desafios</th></tr></thead><tbody>'+
-    d.noites.map((n,i)=>{const prox=d.noites[i+1],seg=prox&&n.vencedores?prox.jogadores/n.vencedores:null;
-      return `<tr><td><b>${n.n}</b></td><td><div class="inlinebar"><i style="width:${Math.max(2,n.jogadores/max*76)}px"></i>${fmt(n.jogadores)}</div></td><td>${fmt(n.vencedores)}</td><td>${seg===null?'—':`<span class="pill ${seg<.6?'low':''}">${Math.round(Math.min(1,seg)*100)}%</span>`}</td><td>${pct(n.vit,n.vit+n.der)}</td><td>${fmt(n.vit+n.der)}</td><td>${n.aband?fmt(n.aband)+' <span class="subtle">('+n.tempoAband+'s)</span>':'—'}</td><td>${val(n.tempoVit,'s')}</td><td>${val(n.tempoDer,'s')}</td><td>${val(n.vida,'%')}</td><td>${val(n.desafios,'%')}</td></tr>`;
-    }).join('')+'</tbody>';
-  const maxD=Math.max(1,...d.porDia.map(x=>x.jogadores));
-  $('dias').innerHTML=d.porDia.map(x=>`<div class="daycol" title="${x.dia}: ${x.jogadores} jogadores"><span class="val">${fmt(x.jogadores)}</span><div class="barwrap"><i style="height:${Math.max(2,x.jogadores/maxD*100)}%"></i></div><span class="date">${x.dia.slice(8)}/${x.dia.slice(5,7)}</span></div>`).join('');
-  $('tDias').innerHTML='<thead><tr><th>Data</th><th>Jogadores</th><th>Novos</th><th>Aberturas</th><th>D1</th><th>D7</th><th>Minutos / jogador</th></tr></thead><tbody>'+d.porDia.slice().reverse().map(x=>`<tr><td>${x.dia.split('-').reverse().join('/')}</td><td>${fmt(x.jogadores)}</td><td>${fmt(x.novos)}</td><td>${fmt(x.aberturas)}</td><td>${val(x.d1,'%')}</td><td>${val(x.d7,'%')}</td><td>${val(x.minutos)}</td></tr>`).join('')+'</tbody>';
-  const nomes={cad:'Cadência',vida:'Trenó',rena:'Rena',carga:'Recarga da rena',saco:'Saco maior'};
-  $('tCompras').innerHTML=d.compras.length?'<thead><tr><th>Melhoria</th><th>Compras</th><th>Noite média</th></tr></thead><tbody>'+d.compras.map(c=>`<tr><td>${esc(nomes[c.k]||c.k)}</td><td>${fmt(c.vezes)}</td><td>${val(c.noiteMedia)}</td></tr>`).join('')+'</tbody>':'<tbody><tr><td colspan="3" class="empty">Nenhuma compra no período.</td></tr></tbody>';
-  const ev=Object.entries(d.eventos||{}).sort((a,b)=>b[1]-a[1]);
-  $('tEventos').innerHTML=ev.length?'<thead><tr><th>Evento</th><th>Ocorrências</th></tr></thead><tbody>'+ev.map(([k,v])=>`<tr><td>${esc(k)}</td><td>${fmt(v)}</td></tr>`).join('')+'</tbody>':'<tbody><tr><td class="empty">Nenhum evento no período.</td></tr></tbody>';
-  const ec=Object.entries(d.errosCont||{}).sort((a,b)=>b[1]-a[1]).slice(0,15);
-  $('tErros').innerHTML=ec.length?'<thead><tr><th>Mensagem</th><th>Ocorrências</th></tr></thead><tbody>'+ec.map(([m,c])=>`<tr><td style="white-space:normal;text-align:left">${esc(m)}</td><td>${fmt(c)}</td></tr>`).join('')+'</tbody>':'<tbody><tr><td class="empty">Nenhum erro no período.</td></tr></tbody>';
-  $('erros').innerHTML=d.erros.length?d.erros.slice(0,30).map(e=>`<li><time>${e.t?new Date(e.t).toLocaleString('pt-BR'):''}</time>${esc(e.m||'Erro sem descrição')}</li>`).join(''):'<li class="subtle">Nenhum erro registrado no período.</li>';
-}
-$('fSenha').onsubmit=e=>{e.preventDefault();senha=$('senha').value;try{sessionStorage.setItem('senhaPainel',senha)}catch{}$('msg').textContent='';carregar();};
-$('sair').onclick=()=>{senha='';try{sessionStorage.removeItem('senhaPainel')}catch{}$('entrar').hidden=false;$('conteudo').hidden=true;};
-if(senha)carregar();else $('entrar').hidden=false;
+$('fSenha').onsubmit = e => { e.preventDefault(); senha = $('senha').value; try { sessionStorage.setItem('senhaPainel', senha); } catch (x) {} $('msg').textContent = ''; carregar(); };
+$('volta').onchange = carregar;
+$('origem').onchange = () => { try { sessionStorage.setItem('origemPainel', $('origem').value); } catch (e) {} carregar(); };
+try { const o = sessionStorage.getItem('origemPainel'); if (o) $('origem').value = o; } catch (e) {}
+$('sair').onclick = () => { senha = ''; try { sessionStorage.removeItem('senhaPainel'); } catch (e) {} $('entrar').hidden = false; $('conteudo').hidden = true; };
+if (senha) carregar();
 </script>
 </body>
 </html>

@@ -1,555 +1,75 @@
-
-// Resumo do painel. Todas as métricas filtráveis usam agregações diárias.
+// Resumo para o painel (protegido pela senha da variável PAINEL_SENHA, enviada no cabeçalho x-senha).
+// ?origem=cg (CrazyGames), fora (fora dela) ou todos (soma das duas). ?volta=N escolhe a volta do funil.
 import { banco, configurado } from '../lib/banco.js';
 
-const PREFIXOS_ORIGEM = { cg: ['cg:'], fora: [''] };
+const PREFIXOS = { cg: ['cg:'], fora: [''], todos: ['cg:', ''] };
+const HASHES = ['sess:aberturas', 'eventos', 'erros:cont', 'novos', 'ret1', 'ret7', 'tempo', 'disp', 'carga', 'compras', 'compras:noite'];
 
-const PREFIXOS = {
-  prod: {
-    cg: ['cg:'],
-    fora: [''],
-    todos: ['cg:', '']
-  },
-  preview: {
-    cg: ['preview:cg:'],
-    fora: ['preview:'],
-    todos: ['preview:cg:', 'preview:']
-  },
-  todos: {
-    cg: ['cg:', 'preview:cg:'],
-    fora: ['', 'preview:'],
-    todos: ['cg:', '', 'preview:cg:', 'preview:']
-  }
-};
-
-const HASHES_DIA = [
-  'eventos:dia:',
-  'disp:dia:',
-  'carga:dia:',
-  'compras:dia:',
-  'compras:noite:dia:',
-  'tempo:dia:',
-  'erros:cont:dia:',
-  'novos:dia:',
-  'ret1:dia:',
-  'ret7:dia:'
-];
-
-const iso = d => d.toISOString().slice(0, 10);
-
-const parseDia = v =>
-  /^\d{4}-\d{2}-\d{2}$/.test(v || '') &&
-  !Number.isNaN(Date.parse(v + 'T00:00:00Z'))
-    ? v
-    : null;
-
-const n = (o, k) => +(o?.[k] || 0);
-
-const somaHash = (a, b) => {
-  const o = { ...a };
-  for (const k in b) {
-    o[k] = n(o, k) + n(b, k);
-  }
-  return o;
-};
-
-async function coletar(pre, volta, dias, inicioPeriodo) {
+// lê os dados brutos de uma origem (prefixo das chaves)
+async function coletar(pre, volta, dias) {
   const p = banco.pipeline();
-
-  for (const dia of dias) {
-    p.pfcount(pre + `sess:dia:${dia}`);
-
-    for (const prefixo of HASHES_DIA) {
-      p.hgetall(pre + prefixo + dia);
-    }
-
-    p.lrange(pre + `erros:dia:${dia}`, 0, 199);
-
-    if (dia < inicioPeriodo) continue;
-
-    for (let noite = 1; noite <= 24; noite++) {
-      const k = `${dia}:${volta}:${noite}`;
-      p.hgetall(pre + `noite:dia:${k}`);
-    }
-  }
-
-  const diasPeriodo = dias.filter(
-    dia => dia >= inicioPeriodo
-  );
-
-  for (let noite = 1; noite <= 24; noite++) {
-    p.pfcount(
-      ...diasPeriodo.map(
-        dia => pre + `jog:dia:${dia}:${volta}:${noite}`
-      )
-    );
-
-    p.pfcount(
-      ...diasPeriodo.map(
-        dia => pre + `venc:dia:${dia}:${volta}:${noite}`
-      )
-    );
-  }
-
-  // Compatibilidade com o histórico anterior:
-  // a versão antiga armazenava o tempo no hash `tempo`,
-  // utilizando a data como campo.
-  p.hgetall(pre + 'tempo');
-
-  const r = await p.exec();
-  let i = 0;
-
-  const out = {
-    dias: [],
-    noites: Array.from(
-      { length: 24 },
-      (_, j) => ({
-        n: j + 1,
-        h: {},
-        jogadores: 0,
-        vencedores: 0
-      })
-    ),
-    total: 0,
-    erros: []
-  };
-
-  for (const dia of dias) {
-    const diaOut = {
-      dia,
-      jogadores: r[i++] || 0,
-      hashes: {}
-    };
-
-    for (const prefixo of HASHES_DIA) {
-      diaOut.hashes[prefixo] = r[i++] || {};
-    }
-
-    diaOut.erros = (r[i++] || []).map(e => {
-      try {
-        return typeof e === 'string'
-          ? JSON.parse(e)
-          : e;
-      } catch {
-        return { m: String(e) };
-      }
-    });
-
-    if (dia >= inicioPeriodo) {
-      out.total += diaOut.jogadores;
-      out.erros.push(...diaOut.erros);
-    }
-
-    if (dia >= inicioPeriodo) {
-      for (let j = 0; j < 24; j++) {
-        out.noites[j].h = somaHash(
-          out.noites[j].h,
-          r[i++] || {}
-        );
-      }
-    }
-
-    out.dias.push(diaOut);
-  }
-
-  for (let j = 0; j < 24; j++) {
-    out.noites[j].jogadores = r[i++] || 0;
-    out.noites[j].vencedores = r[i++] || 0;
-  }
-
-  const tempoLegado = r[i++] || {};
-
-  // Recupera o tempo histórico sem duplicar registros.
-  // Se existe agregação diária nova, ela tem prioridade.
-  // Caso contrário, utiliza o hash antigo `tempo`.
-  for (const diaOut of out.dias) {
-    const hashTempoDia = diaOut.hashes['tempo:dia:'];
-
-    if (
-      !Object.prototype.hasOwnProperty.call(
-        hashTempoDia,
-        'seg'
-      ) &&
-      tempoLegado[diaOut.dia] != null
-    ) {
-      hashTempoDia.seg =
-        Number(tempoLegado[diaOut.dia]) || 0;
-    }
-  }
-
-  out.erros.sort(
-    (a, b) => (b.t || 0) - (a.t || 0)
-  );
-
-  out.erros = out.erros.slice(0, 50);
-
-  return out;
+  for (let n = 1; n <= 24; n++) { const k = volta + ':' + n; p.hgetall(pre + 'noite:' + k); p.pfcount(pre + 'jog:' + k); p.pfcount(pre + 'venc:' + k); }
+  for (const d of dias) p.pfcount(pre + 'sess:dia:' + d);
+  p.pfcount(pre + 'sess:total'); p.lrange(pre + 'erros', 0, 49);
+  for (const h of HASHES) p.hgetall(pre + h);
+  const r = await p.exec(); let i = 0;
+  const bruto = { noites: [], dias: [], hashes: {} };
+  for (let n = 1; n <= 24; n++) bruto.noites.push({ h: r[i++] || {}, jog: r[i++] || 0, venc: r[i++] || 0 });
+  for (let j = 0; j < dias.length; j++) bruto.dias.push(r[i++] || 0);
+  bruto.total = r[i++] || 0;
+  bruto.erros = (r[i++] || []).map(e => { try { return typeof e === 'string' ? JSON.parse(e) : e; } catch (x) { return { m: String(e) }; } });
+  for (const h of HASHES) bruto.hashes[h] = r[i++] || {};
+  return bruto;
 }
-
-function somarPartes(a, b) {
+// soma duas origens (uma sessão só existe numa delas, então somar as contagens não duplica ninguém)
+const somarHash = (a, b) => { const o = { ...a }; for (const k in b) o[k] = +(o[k] || 0) + +(b[k] || 0); return o; };
+function somar(a, b) {
   return {
-    total: a.total + b.total,
-
-    dias: a.dias.map((d, i) => {
-      const x = b.dias[i];
-
-      return {
-        ...d,
-        jogadores: d.jogadores + x.jogadores,
-
-        hashes: Object.fromEntries(
-          HASHES_DIA.map(k => [
-            k,
-            somaHash(d.hashes[k], x.hashes[k])
-          ])
-        ),
-
-        erros: d.erros.concat(x.erros)
-      };
-    }),
-
-    noites: a.noites.map((x, i) => ({
-      ...x,
-      h: somaHash(x.h, b.noites[i].h),
-      jogadores: x.jogadores + b.noites[i].jogadores,
-      vencedores: x.vencedores + b.noites[i].vencedores
-    })),
-
-    erros: a.erros
-      .concat(b.erros)
-      .sort((x, y) => (y.t || 0) - (x.t || 0))
-      .slice(0, 50)
+    noites: a.noites.map((x, i) => ({ h: somarHash(x.h, b.noites[i].h), jog: x.jog + b.noites[i].jog, venc: x.venc + b.noites[i].venc })),
+    dias: a.dias.map((x, i) => x + b.dias[i]), total: a.total + b.total,
+    erros: a.erros.concat(b.erros).sort((x, y) => (y.t || 0) - (x.t || 0)).slice(0, 50),
+    hashes: Object.fromEntries(HASHES.map(h => [h, somarHash(a.hashes[h], b.hashes[h])])),
   };
 }
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
-
   const senha = process.env.PAINEL_SENHA;
+  if (!senha) return res.status(500).json({ erro: 'Defina a variável PAINEL_SENHA no Vercel.' });
+  if (req.headers['x-senha'] !== senha) return res.status(401).json({ erro: 'Senha incorreta.' });
 
-  if (!senha) {
-    return res.status(500).json({
-      erro: 'Defina a variável PAINEL_SENHA no Vercel.'
-    });
-  }
-
-  if (req.headers['x-senha'] !== senha) {
-    return res.status(401).json({
-      erro: 'Senha incorreta.'
-    });
-  }
-
-  const volta = Math.max(
-    1,
-    Math.min(99, parseInt(req.query.volta, 10) || 1)
-  );
-
-  const origem = PREFIXOS_ORIGEM[req.query.origem]
-    ? req.query.origem
-    : 'todos';
-
-  const ambiente = PREFIXOS[req.query.ambiente]
-    ? req.query.ambiente
-    : 'prod';
-
-  const hoje = iso(new Date());
-
-  const padraoInicio = iso(
-    new Date(Date.now() - 13 * 864e5)
-  );
-
-  let inicio = parseDia(req.query.de) || padraoInicio;
-  let fim = parseDia(req.query.ate) || hoje;
-
-  if (inicio > fim) {
-    [inicio, fim] = [fim, inicio];
-  }
-
-  if (fim > hoje) fim = hoje;
-  if (inicio > hoje) inicio = hoje;
-
-  const diff = Math.floor(
-    (
-      Date.parse(fim + 'T00:00:00Z') -
-      Date.parse(inicio + 'T00:00:00Z')
-    ) / 864e5
-  );
-
-  if (diff > 89) {
-    inicio = iso(
-      new Date(
-        Date.parse(fim + 'T00:00:00Z') -
-        89 * 864e5
-      )
-    );
-  }
-
+  const volta = Math.max(1, Math.min(99, parseInt(req.query.volta, 10) || 1));
+  const origem = PREFIXOS[req.query.origem] ? req.query.origem : 'todos';
   const dias = [];
+  for (let i = 14; i >= 0; i--) dias.push(new Date(Date.now() - i * 864e5).toISOString().slice(0, 10));   // 15 dias: o 1º só serve de base para o D1
 
-  const inicioConsulta = iso(
-    new Date(
-      Date.parse(inicio + 'T00:00:00Z') -
-      7 * 864e5
-    )
-  );
+  const partes = await Promise.all(PREFIXOS[origem].map(pre => coletar(pre, volta, dias)));
+  const b = partes.reduce(somar);
+  const H = b.hashes, nOf = (o, k) => +(o[k] || 0);
 
-  for (
-    let t = Date.parse(inicioConsulta + 'T00:00:00Z');
-    t <= Date.parse(fim + 'T00:00:00Z');
-    t += 864e5
-  ) {
-    dias.push(iso(new Date(t)));
-  }
-
-  const partes = await Promise.all(
-    PREFIXOS[ambiente][origem].map(
-      pre => coletar(pre, volta, dias, inicio)
-    )
-  );
-
-  const b = partes.reduce(somarPartes);
-
-  const getDia = (d, prefixo) =>
-    b.dias.find(x => x.dia === d)?.hashes[prefixo] || {};
-
-  const diaAntes = (d, k) =>
-    iso(
-      new Date(
-        Date.parse(d + 'T00:00:00Z') -
-        k * 864e5
-      )
-    );
-
-  const periodo = b.dias.filter(
-    d => d.dia >= inicio
-  );
-
-  const porDia = periodo.map(d => {
-    const H = d.hashes;
-
-    const novos = n(H['novos:dia:'], 'n');
-    const ret1 = n(H['ret1:dia:'], 'n');
-    const ret7 = n(H['ret7:dia:'], 'n');
-
-    const baseD1 = n(
-      getDia(diaAntes(d.dia, 1), 'novos:dia:'),
-      'n'
-    );
-
-    const baseD7 = n(
-      getDia(diaAntes(d.dia, 7), 'novos:dia:'),
-      'n'
-    );
-
-    const tempo = n(H['tempo:dia:'], 'seg');
-
-    return {
-      dia: d.dia,
-      jogadores: d.jogadores,
-      aberturas: n(H['eventos:dia:'], 'sessao'),
-      novos,
-      ret1,
-      ret7,
-
-      minutos: d.jogadores
-        ? Math.round(tempo / d.jogadores / 6) / 10
-        : null,
-
-      d1: baseD1
-        ? Math.round(ret1 / baseD1 * 100)
-        : null,
-
-      d7: baseD7
-        ? Math.round(ret7 / baseD7 * 100)
-        : null
-    };
+  const noites = b.noites.map((x, i) => {
+    const num = k => nOf(x.h, k);
+    return { n: i + 1, jogadores: x.jog, vencedores: x.venc, ini: num('ini'), vit: num('vit'), der: num('der'), aband: num('aband'),
+      tempoAband: num('aband') ? Math.round(num('tempoAband') / num('aband')) : null, desafios: num('vit') ? Math.round(num('des') / (num('vit') * 2) * 100) : null,
+      tempoVit: num('vit') ? Math.round(num('tempoVit') / num('vit')) : null, tempoDer: num('der') ? Math.round(num('tempoDer') / num('der')) : null,
+      vida: num('vit') ? Math.round(num('vida') / num('vit')) : null };
   });
-
-  const noiteDados = b.noites.map(x => {
-    const h = x.h;
-    const num = k => n(h, k);
-
-    return {
-      n: x.n,
-      jogadores: x.jogadores,
-      vencedores: x.vencedores,
-      ini: num('ini'),
-      vit: num('vit'),
-      der: num('der'),
-      aband: num('aband'),
-
-      tempoAband: num('aband')
-        ? Math.round(num('tempoAband') / num('aband'))
-        : null,
-
-      desafios: num('vit')
-        ? Math.round(
-            num('des') / (num('vit') * 2) * 100
-          )
-        : null,
-
-      tempoVit: num('vit')
-        ? Math.round(num('tempoVit') / num('vit'))
-        : null,
-
-      tempoDer: num('der')
-        ? Math.round(num('tempoDer') / num('der'))
-        : null,
-
-      vida: num('vit')
-        ? Math.round(num('vida') / num('vit'))
-        : null
-    };
-  });
-
-  const somarCampo = (prefixo, campo) =>
-    periodo.reduce(
-      (a, d) => a + n(d.hashes[prefixo], campo),
-      0
-    );
-
-  const cel = somarCampo('disp:dia:', 'cel');
-  const pc = somarCampo('disp:dia:', 'pc');
-
-  const cargaCelN = somarCampo('carga:dia:', 'cel:n');
-  const cargaPcN = somarCampo('carga:dia:', 'pc:n');
-
-  const tempoTotal = somarCampo('tempo:dia:', 'seg');
-
-  const d1Base = periodo.reduce(
-    (a, d) =>
-      a + n(
-        getDia(diaAntes(d.dia, 1), 'novos:dia:'),
-        'n'
-      ),
-    0
-  );
-
-  const d7Base = periodo.reduce(
-    (a, d) =>
-      a + n(
-        getDia(diaAntes(d.dia, 7), 'novos:dia:'),
-        'n'
-      ),
-    0
-  );
-
-  const ret1 = porDia.reduce(
-    (a, d) => a + d.ret1,
-    0
-  );
-
-  const ret7 = porDia.reduce(
-    (a, d) => a + d.ret7,
-    0
-  );
-
-  const compras = {};
-
-  for (const d of periodo) {
-    for (
-      const [k, v] of Object.entries(
-        d.hashes['compras:dia:']
-      )
-    ) {
-      compras[k] ||= {
-        k,
-        vezes: 0,
-        somaNoite: 0
-      };
-
-      compras[k].vezes += +v;
-
-      compras[k].somaNoite += n(
-        d.hashes['compras:noite:dia:'],
-        k
-      );
-    }
-  }
-
-  const comprasOut = Object.values(compras)
-    .map(x => ({
-      k: x.k,
-      vezes: x.vezes,
-
-      noiteMedia: x.vezes
-        ? Math.round(
-            x.somaNoite / x.vezes * 10
-          ) / 10
-        : null
-    }))
-    .sort((a, b) => b.vezes - a.vezes);
-
-  const errosCont = {};
-
-  for (const d of periodo) {
-    for (
-      const [k, v] of Object.entries(
-        d.hashes['erros:cont:dia:']
-      )
-    ) {
-      errosCont[k] = (errosCont[k] || 0) + +v;
-    }
-  }
-
-  const eventos = {};
-
-  for (const d of periodo) {
-    for (
-      const [k, v] of Object.entries(
-        d.hashes['eventos:dia:']
-      )
-    ) {
-      eventos[k] = (eventos[k] || 0) + +v;
-    }
-  }
-
-  const carga = (dp, count) =>
-    count
-      ? Math.round(
-          somarCampo('carga:dia:', dp + ':soma') /
-          count / 100
-        ) / 10
-      : null;
-
+  const diaAntes = (d, k) => new Date(Date.parse(d) - k * 864e5).toISOString().slice(0, 10);
+  let porDia = dias.map((dia, j) => {
+    const jogadores = b.dias[j], base1 = nOf(H.novos, diaAntes(dia, 1)), base7 = nOf(H.novos, diaAntes(dia, 7));
+    return { dia, jogadores, aberturas: nOf(H['sess:aberturas'], dia), novos: nOf(H.novos, dia), ret1: nOf(H.ret1, dia), ret7: nOf(H.ret7, dia),
+      minutos: jogadores ? Math.round(nOf(H.tempo, dia) / jogadores / 6) / 10 : null,
+      d1: base1 ? Math.round(nOf(H.ret1, dia) / base1 * 100) : null, d7: base7 ? Math.round(nOf(H.ret7, dia) / base7 * 100) : null };
+  }).slice(1);
+  const ult7 = porDia.slice(-7);
+  const media = fn => { const v = ult7.map(fn).filter(x => x !== null); return v.length ? Math.round(v.reduce((a, c) => a + c, 0) / v.length) : null; };
+  const cel = nOf(H.disp, 'cel'), pc = nOf(H.disp, 'pc');
   const resumo = {
-    minutos: b.total
-      ? Math.round(tempoTotal / b.total / 6) / 10
-      : null,
-
-    d1: d1Base
-      ? Math.round(ret1 / d1Base * 100)
-      : null,
-
-    d7: d7Base
-      ? Math.round(ret7 / d7Base * 100)
-      : null,
-
-    celular: cel + pc
-      ? Math.round(cel / (cel + pc) * 100)
-      : null,
-
-    cargaCel: carga('cel', cargaCelN),
-    cargaPc: carga('pc', cargaPcN)
+    minutos: (() => { const j = ult7.reduce((a, d) => a + d.jogadores, 0), t = ult7.reduce((a, d) => a + nOf(H.tempo, d.dia), 0); return j ? Math.round(t / j / 6) / 10 : null; })(),
+    d1: media(d => d.d1), d7: media(d => d.d7), celular: cel + pc ? Math.round(cel / (cel + pc) * 100) : null,
+    cargaCel: nOf(H.carga, 'cel:n') ? Math.round(nOf(H.carga, 'cel:soma') / nOf(H.carga, 'cel:n') / 100) / 10 : null,
+    cargaPc: nOf(H.carga, 'pc:n') ? Math.round(nOf(H.carga, 'pc:soma') / nOf(H.carga, 'pc:n') / 100) / 10 : null,
   };
-
-  return res.status(200).json({
-    configurado,
-    origem,
-    ambiente,
-    volta,
-    inicio,
-    fim,
-    diasSelecionados: periodo.length,
-    limiteDias: 90,
-    total: b.total,
-    resumo,
-    porDia,
-    noites: noiteDados,
-    eventos,
-    erros: b.erros,
-    errosCont,
-    compras: comprasOut,
-    historicoAnterior: true
-  });
+  const compras = Object.keys(H.compras).map(k => ({ k, vezes: nOf(H.compras, k), noiteMedia: nOf(H.compras, k) ? Math.round(nOf(H['compras:noite'], k) / nOf(H.compras, k) * 10) / 10 : null })).sort((x, y) => y.vezes - x.vezes);
+  return res.status(200).json({ configurado, origem, volta, total: b.total, resumo, porDia, noites, eventos: H.eventos, erros: b.erros, errosCont: H['erros:cont'], compras });
 }
