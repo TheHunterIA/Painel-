@@ -66,3 +66,16 @@ Como o jogo não guarda nenhuma identificação, "jogador" no painel é uma sess
 - O plano grátis do Upstash comporta dezenas de milhares de eventos por dia; cada noite jogada gera 2 eventos.
 - O endereço de envio é público (qualquer um pode mandar eventos). Os dados são validados e só somam contadores, mas números muito estranhos podem ser alguém enviando lixo.
 - Confira se a CrazyGames permite que o jogo envie dados para um servidor próprio antes de ligar em produção.
+
+
+## Filtro por período e métricas diárias
+
+O painel agora permite escolher data inicial e final, com atalhos de 7, 14 e 30 dias. O intervalo máximo consultável é de 90 dias. Os filtros de origem (CrazyGames/externa) e volta da campanha continuam funcionando junto com as datas. Todas as datas usam UTC.
+
+A partir desta versão, o endpoint grava agregações diárias para sessões, eventos, dispositivos, carregamento, tempo de jogo, compras, erros e estatísticas de cada noite. O resumo consulta apenas o intervalo escolhido (mais os sete dias anteriores, usados como base de cálculo de retenção D1/D7).
+
+**Importante sobre o histórico:** os contadores antigos continuam no Redis, mas não guardavam uma dimensão diária para todas as métricas. Não é possível reconstruir em quais dias ocorreram compras, erros, partidas e carregamentos antigos. Por isso, as métricas detalhadas filtradas por data começam a ser preenchidas após a implantação desta versão. Os dados antigos não são apagados, mas não entram retroativamente nos novos recortes diários.
+
+O total apresentado é a soma de sessões/jogadores-dia únicos em cada dia do intervalo, não uma contagem de pessoas únicas ao longo de todo o período. O jogo gera um identificador de sessão diferente a cada abertura.
+
+Para publicar, substitua os arquivos do projeto pelos desta versão e faça um novo deploy no Vercel. Não é necessário apagar nem recriar o Redis.
