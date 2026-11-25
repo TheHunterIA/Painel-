@@ -25,7 +25,10 @@ export default async function handler(req, res) {
 
   // A data é definida no servidor para impedir que o cliente altere períodos históricos.
   const agora = Date.now(), dia = new Date(agora).toISOString().slice(0, 10);
-  const pre = d.o === 'cg' ? 'cg:' : '';
+  // Eventos de Preview usam um namespace próprio no Redis. Produção mantém
+  // as chaves antigas para preservar a compatibilidade com o histórico existente.
+  const ambiente = d.a === 'preview' ? 'preview' : 'prod';
+  const pre = (ambiente === 'preview' ? 'preview:' : '') + (d.o === 'cg' ? 'cg:' : '');
   const pl = banco.pipeline();
   const p = { exec: () => pl.exec() };
   for (const m of ['hincrby', 'pfadd', 'lpush', 'ltrim']) p[m] = (k, ...a) => { pl[m](pre + k, ...a); return p; };

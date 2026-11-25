@@ -56,6 +56,7 @@ button:disabled{opacity:.55;cursor:wait}
         <div class="field datefield"><label for="de">Data inicial</label><input id="de" type="date"></div>
         <div class="field datefield"><label for="ate">Data final</label><input id="ate" type="date"></div>
         <div class="field"><label for="origem">Origem</label><select id="origem"><option value="todos">Todas</option><option value="cg">CrazyGames</option><option value="fora">Externa</option></select></div>
+        <div class="field"><label for="ambiente">Ambiente</label><select id="ambiente"><option value="prod" selected>Produção</option><option value="preview">Preview / testes</option><option value="todos">Todos</option></select></div>
         <div class="field"><label for="volta">Volta</label><select id="volta"></select></div>
       </div>
       <div class="toolbar-actions">
@@ -130,7 +131,7 @@ function escolherPeriodo(qtd){
 }
 document.querySelectorAll('[data-range]').forEach(b=>b.onclick=()=>{escolherPeriodo(+b.dataset.range);carregar();});
 $('aplicar').onclick=carregar; $('atualizar').onclick=carregar;
-$('origem').onchange=carregar; $('volta').onchange=carregar;
+$('origem').onchange=carregar; $('ambiente').onchange=carregar; $('volta').onchange=carregar;
 $('de').onchange=()=>document.querySelectorAll('[data-range]').forEach(b=>b.classList.remove('active'));
 $('ate').onchange=()=>document.querySelectorAll('[data-range]').forEach(b=>b.classList.remove('active'));
 
@@ -142,7 +143,7 @@ async function carregar(){
   if((Date.parse(fim+'T00:00:00Z')-Date.parse(inicio+'T00:00:00Z'))/864e5>89){$('status').textContent='Selecione um intervalo de até 90 dias.';return;}
   $('aplicar').disabled=true;$('atualizar').disabled=true;$('status').textContent='Atualizando dados…';
   try{
-    const qs=new URLSearchParams({de:inicio,ate:fim,volta:$('volta').value,origem:$('origem').value});
+    const qs=new URLSearchParams({de:inicio,ate:fim,volta:$('volta').value,origem:$('origem').value,ambiente:$('ambiente').value});
     const r=await fetch('/api/resumo?'+qs,{headers:{'x-senha':senha}});
     const d=await r.json().catch(()=>({}));
     if(!r.ok){if(r.status===401){senha='';try{sessionStorage.removeItem('senhaPainel')}catch{}}
@@ -156,7 +157,7 @@ async function carregar(){
 function render(d){
   const rs=d.resumo||{}, last=d.porDia[d.porDia.length-1]||{};
   const val=(v,s='')=>v===null||v===undefined?'—':v+s;
-  $('periodoLabel').textContent=`${new Date(d.inicio+'T00:00:00Z').toLocaleDateString('pt-BR',{timeZone:'UTC'})} a ${new Date(d.fim+'T00:00:00Z').toLocaleDateString('pt-BR',{timeZone:'UTC'})} · origem: ${d.origem==='cg'?'CrazyGames':d.origem==='fora'?'Externa':'todas'} · volta ${d.volta}`;
+  $('periodoLabel').textContent=`${new Date(d.inicio+'T00:00:00Z').toLocaleDateString('pt-BR',{timeZone:'UTC'})} a ${new Date(d.fim+'T00:00:00Z').toLocaleDateString('pt-BR',{timeZone:'UTC'})} · origem: ${d.origem==='cg'?'CrazyGames':d.origem==='fora'?'Externa':'todas'} · ambiente: ${d.ambiente==='preview'?'Preview':d.ambiente==='todos'?'todos':'Produção'} · volta ${d.volta}`;
   $('nTotal').textContent=fmt(d.total);$('nHoje').textContent=fmt(last.jogadores);
   $('n24').textContent=fmt(d.noites[23]?.jogadores);$('v24').textContent=fmt(d.noites[23]?.vencedores);
   $('cMin').textContent=val(rs.minutos,' min');$('cD1').textContent=val(rs.d1,'%');$('cD7').textContent=val(rs.d7,'%');$('cCel').textContent=val(rs.celular,'%');

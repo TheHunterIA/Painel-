@@ -79,3 +79,27 @@ A partir desta versão, o endpoint grava agregações diárias para sessões, ev
 O total apresentado é a soma de sessões/jogadores-dia únicos em cada dia do intervalo, não uma contagem de pessoas únicas ao longo de todo o período. O jogo gera um identificador de sessão diferente a cada abertura.
 
 Para publicar, substitua os arquivos do projeto pelos desta versão e faça um novo deploy no Vercel. Não é necessário apagar nem recriar o Redis.
+
+
+## Separação entre Produção e Preview
+
+O painel agora tem o filtro **Ambiente**: Produção (padrão), Preview / testes ou Todos. Os eventos de Preview são gravados em um namespace separado no Redis (`preview:` e `preview:cg:`); os eventos de produção continuam usando as chaves anteriores (`''` e `cg:`), preservando a compatibilidade com os dados históricos. O filtro pode ser combinado com período, origem e volta.
+
+### Atualizar também o jogo
+
+Esta separação exige a versão atualizada do arquivo `telemetria.js`, incluída na raiz deste ZIP. Substitua o arquivo correspondente no projeto do jogo e publique uma nova versão. Sem essa atualização, os eventos continuam chegando como Produção (compatibilidade com versões antigas).
+
+A identificação de Preview é feita por estes sinais: `window.__TELEMETRIA_AMBIENTE = 'preview'`, parâmetros de URL `?preview=1`, `?cg_preview=1`, `?isPreview=true` ou `?env=preview`, domínios contendo `preview`, `staging` ou `sandbox`, e `CrazyGames.SDK.environment` quando esse valor for literalmente `preview`.
+
+**Forma mais confiável para o Preview da CrazyGames:** antes de carregar `telemetria.js` no build de Preview, defina:
+
+```html
+<script>window.__TELEMETRIA_AMBIENTE = 'preview';</script>
+<script src="/caminho/telemetria.js"></script>
+```
+
+No build de Produção, não defina essa variável (ou defina como `'prod'`). O marcador precisa ser configurado antes do script de telemetria executar. Se o Preview da plataforma não expuser um parâmetro ou domínio identificável, esse marcador explícito é necessário; o código não tenta adivinhar pelo fato de estar dentro de um iframe da CrazyGames, pois a versão publicada também roda em iframe.
+
+### Histórico já misturado
+
+Eventos antigos que foram enviados antes desta separação não carregam um marcador confiável de Preview. Eles permanecem no conjunto histórico de Produção e não podem ser classificados retroativamente sem risco de excluir jogadores reais. A separação vale para eventos enviados após a atualização do jogo e do painel.

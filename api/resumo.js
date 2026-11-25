@@ -1,7 +1,12 @@
 // Resumo do painel. Todas as métricas filtráveis usam agregações diárias.
 import { banco, configurado } from '../lib/banco.js';
 
-const PREFIXOS = { cg: ['cg:'], fora: [''], todos: ['cg:', ''] };
+const PREFIXOS_ORIGEM = { cg: ['cg:'], fora: [''] };
+const PREFIXOS = {
+  prod: { cg: ['cg:'], fora: [''], todos: ['cg:', ''] },
+  preview: { cg: ['preview:cg:'], fora: ['preview:'], todos: ['preview:cg:', 'preview:'] },
+  todos: { cg: ['cg:', 'preview:cg:'], fora: ['', 'preview:'], todos: ['cg:', '', 'preview:cg:', 'preview:'] }
+};
 const HASHES_DIA = ['eventos:dia:', 'disp:dia:', 'carga:dia:', 'compras:dia:', 'compras:noite:dia:', 'tempo:dia:', 'erros:cont:dia:', 'novos:dia:', 'ret1:dia:', 'ret7:dia:'];
 const iso = d => d.toISOString().slice(0, 10);
 const parseDia = v => /^\d{4}-\d{2}-\d{2}$/.test(v || '') && !Number.isNaN(Date.parse(v + 'T00:00:00Z')) ? v : null;
@@ -66,7 +71,8 @@ export default async function handler(req, res) {
   if (req.headers['x-senha'] !== senha) return res.status(401).json({ erro: 'Senha incorreta.' });
 
   const volta = Math.max(1, Math.min(99, parseInt(req.query.volta, 10) || 1));
-  const origem = PREFIXOS[req.query.origem] ? req.query.origem : 'todos';
+  const origem = PREFIXOS_ORIGEM[req.query.origem] ? req.query.origem : 'todos';
+  const ambiente = PREFIXOS[req.query.ambiente] ? req.query.ambiente : 'prod';
   const hoje = iso(new Date());
   const padraoInicio = iso(new Date(Date.now() - 13 * 864e5));
   let inicio = parseDia(req.query.de) || padraoInicio;
@@ -80,7 +86,7 @@ export default async function handler(req, res) {
   const inicioConsulta = iso(new Date(Date.parse(inicio + 'T00:00:00Z') - 7 * 864e5));
   for (let t = Date.parse(inicioConsulta + 'T00:00:00Z'); t <= Date.parse(fim + 'T00:00:00Z'); t += 864e5) dias.push(iso(new Date(t)));
 
-  const partes = await Promise.all(PREFIXOS[origem].map(pre => coletar(pre, volta, dias, inicio)));
+  const partes = await Promise.all(PREFIXOS[ambiente][origem].map(pre => coletar(pre, volta, dias, inicio)));
   const b = partes.reduce(somarPartes);
   const getDia = (d, prefixo) => b.dias.find(x => x.dia === d)?.hashes[prefixo] || {};
   const diaAntes = (d, k) => iso(new Date(Date.parse(d + 'T00:00:00Z') - k * 864e5));
@@ -132,7 +138,7 @@ export default async function handler(req, res) {
     celular: cel + pc ? Math.round(cel / (cel + pc) * 100) : null,
     cargaCel: carga('cel', cargaCelN), cargaPc: carga('pc', cargaPcN)
   };
-  return res.status(200).json({ configurado, origem, volta, inicio, fim, diasSelecionados: periodo.length, limiteDias: 90,
+  return res.status(200).json({ configurado, origem, ambiente, volta, inicio, fim, diasSelecionados: periodo.length, limiteDias: 90,
     total: b.total, resumo, porDia, noites: noiteDados, eventos, erros: b.erros, errosCont, compras: comprasOut,
     historicoAnterior: true });
 }
