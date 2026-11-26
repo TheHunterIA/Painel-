@@ -30,9 +30,12 @@ export default async function handler(req, res) {
   const dia = new Date().toISOString().slice(0, 10);   // UTC, igual ao jogo
   // origem: CrazyGames ('cg:' na frente de cada chave) ou fora (sem prefixo; os dados de antes da separação ficam aqui)
   const pre = d.o === 'cg' ? 'cg:' : '';
+  // aparelho (cel/pc): cada contador é gravado também numa cópia só daquele aparelho (prefixo 'cel~' / 'pc~'), para o painel filtrar
+  const dev = ['cel', 'pc'].includes(d.d) ? d.d : (e === 'sessao' || e === 'carregou') && ['cel', 'pc'].includes(x.disp) ? x.disp : null;
+  const pres = dev ? [pre, pre + dev + '~'] : [pre];
   const pl = banco.pipeline();
   const p = { exec: () => pl.exec() };
-  for (const m of ['hincrby', 'pfadd', 'lpush', 'ltrim']) p[m] = (k, ...a) => { pl[m](pre + k, ...a); return p; };
+  for (const m of ['hincrby', 'pfadd', 'lpush', 'ltrim']) p[m] = (k, ...a) => { for (const q of pres) pl[m](q + k, ...a); return p; };
   const dm = 'dm:' + dia;                       // contadores diversos do dia (campos com prefixo: ev:, dp:, ca:, cp:, cpn:, er:)
   p.hincrby('eventos', e, 1); p.hincrby(dm, 'ev:' + e, 1);
   // contador de uma noite: total geral + dia

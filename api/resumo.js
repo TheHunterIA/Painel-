@@ -1,4 +1,5 @@
 // Resumo para o painel (protegido pela senha da variável PAINEL_SENHA, enviada no cabeçalho x-senha).
+// ?disp=cel|pc filtra por aparelho (só há dados a partir de quando o jogo passou a enviar o aparelho em todo evento).
 // ?origem=cg (CrazyGames), fora (fora dela) ou todos (soma das duas). ?volta=N escolhe a volta do funil.
 // ?de=AAAA-MM-DD&ate=AAAA-MM-DD filtra por dia (UTC); sem eles, mostra o total geral desde o começo.
 import { banco, configurado } from '../lib/banco.js';
@@ -74,6 +75,8 @@ export default async function handler(req, res) {
 
   const volta = Math.max(1, Math.min(99, parseInt(req.query.volta, 10) || 1));
   const origem = PREFIXOS[req.query.origem] ? req.query.origem : 'todos';
+  const disp = req.query.disp === 'cel' || req.query.disp === 'pc' ? req.query.disp : 'todos';   // aparelho
+  const prefixos = PREFIXOS[origem].map(pre => disp === 'todos' ? pre : pre + disp + '~');
   const hoje = iso(Date.now());
   // período: com ?de/?ate filtra por dia (no máximo 92 dias); sem eles, total geral
   let de = valido(req.query.de) ? req.query.de : null, ate = valido(req.query.ate) ? req.query.ate : null;
@@ -86,7 +89,7 @@ export default async function handler(req, res) {
   const sel = filtrado ? lista(de, ate) : null;
   const graf = filtrado ? sel : lista(somaDias(hoje, -29), hoje);   // total geral: gráfico dos últimos 30 dias
 
-  const partes = await Promise.all(PREFIXOS[origem].map(pre => coletar(pre, volta, sel, graf)));
+  const partes = await Promise.all(prefixos.map(pre => coletar(pre, volta, sel, graf)));
   const b = partes.reduce(somar);
   const H = b.hashes;
 
@@ -118,6 +121,6 @@ export default async function handler(req, res) {
   const compras = Object.keys(H.compras).map(k => ({ k, vezes: nOf(H.compras, k), noiteMedia: nOf(H.compras, k) ? Math.round(nOf(H['compras:noite'], k) / nOf(H.compras, k) * 10) / 10 : null })).sort((x, y) => y.vezes - x.vezes);
   let erros = b.erros;
   if (filtrado) { const t0 = Date.parse(de), t1 = Date.parse(ate) + 864e5; erros = erros.filter(e => e.t >= t0 && e.t < t1); }
-  return res.status(200).json({ configurado, origem, volta, periodo: { filtrado, de, ate, hoje, primeiroDetalhe: b.primeiro },
+  return res.status(200).json({ configurado, origem, disp, volta, periodo: { filtrado, de, ate, hoje, primeiroDetalhe: b.primeiro },
     total: b.total, resumo, porDia, noites, eventos: H.eventos, erros: erros.slice(0, 50), errosCont: H['erros:cont'], compras });
 }

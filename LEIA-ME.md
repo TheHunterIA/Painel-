@@ -57,6 +57,10 @@ Em cima do painel ficam os atalhos **Hoje, Ontem, 7 dias, 30 dias e Tudo**, e do
 - **Importante:** o detalhe por noite de cada dia só é guardado a partir da publicação desta versão. O que chegou antes aparece só em **Tudo** (e nos números por dia de jogadores, novos, D1, D7 e minutos, que já eram guardados por dia). Se você escolher um dia anterior à publicação, o funil dele aparece zerado e o painel avisa.
 - O tempo das noites agora é arredondado no servidor, então valores com decimais (ex.: 12,4 s) deixam de ser descartados.
 
+## Filtrar por aparelho
+
+O seletor **Aparelho** (Todos / Celular / Computador) funciona junto com o filtro por dia. Para isso o `telemetria.js` novo manda o aparelho em todo evento. Só há dados por aparelho **depois** que o jogo com o `telemetria.js` novo for publicado; jogadores com a versão antiga em cache continuam só em "Todos".
+
 ## Os outros números
 
 - **Tempo médio por jogador:** minutos de jogo por jogador, contando só o tempo com o jogo visível (últimos 7 dias no cartão; por dia na tabela).

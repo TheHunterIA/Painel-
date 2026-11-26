@@ -74,6 +74,7 @@
         <label>até <input type="date" id="ate"></label>
         <button class="prim" id="aplicar" type="button">Ver esses dias</button>
         <label>Origem <select id="origem"><option value="todos">Todas</option><option value="cg">CrazyGames</option><option value="fora">Fora da CrazyGames</option></select></label>
+        <label>Aparelho <select id="disp"><option value="todos">Todos</option><option value="cel">Celular</option><option value="pc">Computador</option></select></label>
         <label>Volta <select id="volta"></select></label>
         <button class="sair" id="sair" type="button">Sair</button>
       </div>
@@ -198,18 +199,22 @@ $('detalhes').onchange = $('todas').onchange = desenharFunil;
 
 async function carregar() {
   desenharChips();
-  const q = new URLSearchParams({ volta: $('volta').value, origem: $('origem').value }); if (estado.de || estado.ate) { q.set('de', estado.de || estado.ate); q.set('ate', estado.ate || estado.de); }
+  const q = new URLSearchParams({ volta: $('volta').value, origem: $('origem').value, disp: $('disp').value }); if (estado.de || estado.ate) { q.set('de', estado.de || estado.ate); q.set('ate', estado.ate || estado.de); }
   const r = await fetch('/api/resumo?' + q, { headers: { 'x-senha': senha } });
   const d = await r.json().catch(() => ({}));
   if (!r.ok) { $('msg').textContent = d.erro || 'Erro ao carregar.'; $('entrar').hidden = false; $('conteudo').hidden = true; return; }
   ultimoD = d; const p = d.periodo;
   $('entrar').hidden = true; $('conteudo').hidden = false; $('semBanco').hidden = d.configurado;
   const ORIG = { todos: 'todas as origens', cg: 'só CrazyGames', fora: 'só fora da CrazyGames' };
-  $('mostrando').innerHTML = `Mostrando <b>${periodoTxt(p)}</b> · ${ORIG[d.origem]} · volta ${d.volta}`;
+  const DISP = { todos: 'todos os aparelhos', cel: 'só celular', pc: 'só computador' };
+  $('mostrando').innerHTML = `Mostrando <b>${periodoTxt(p)}</b> · ${ORIG[d.origem]} · ${DISP[d.disp]} · volta ${d.volta}`;
+  $('cCel').closest('.cartao').hidden = d.disp !== 'todos';
   // aviso: o detalhe por noite só existe a partir do primeiro dia com dados diários
   const nota = $('notaDetalhe');
   if (p.filtrado && p.primeiroDetalhe && p.de < p.primeiroDetalhe) { nota.hidden = false; nota.textContent = `O funil por noite só existe a partir de ${dm(p.primeiroDetalhe)} (quando o filtro por dia entrou no ar). Antes disso há só os números gerais, então esses dias aparecem zerados no funil.`; }
   else if (p.filtrado && !p.primeiroDetalhe) { nota.hidden = false; nota.textContent = 'Ainda não chegou nenhum dado com detalhe por dia. Atualize o jogo/painel e jogue uma noite para começar a encher.'; }
+  else if (d.disp !== 'todos' && p.primeiroDetalhe) { nota.hidden = false; nota.textContent = `O filtro de aparelho só tem dados desde ${dm(p.primeiroDetalhe)} (quando o jogo passou a informar o aparelho em cada evento). Antes disso, use "Todos".`; }
+  else if (d.disp !== 'todos') { nota.hidden = false; nota.textContent = 'Ainda não chegou nenhum dado com aparelho. Publique o telemetria.js novo no jogo e jogue uma noite.'; }
   else nota.hidden = true;
   $('frases').innerHTML = frases(d).map(x => `<li>${x}</li>`).join('');
   const rs = d.resumo, n24 = d.noites[23];
@@ -231,6 +236,8 @@ async function carregar() {
 }
 $('fSenha').onsubmit = e => { e.preventDefault(); senha = $('senha').value; try { sessionStorage.setItem('senhaPainel', senha); } catch (x) {} $('msg').textContent = ''; carregar(); };
 $('volta').onchange = carregar;
+$('disp').onchange = () => { try { sessionStorage.setItem('dispPainel', $('disp').value); } catch (e) {} carregar(); };
+try { const v = sessionStorage.getItem('dispPainel'); if (v) $('disp').value = v; } catch (e) {}
 $('origem').onchange = () => { try { sessionStorage.setItem('origemPainel', $('origem').value); } catch (e) {} carregar(); };
 try { const o = sessionStorage.getItem('origemPainel'); if (o) $('origem').value = o; } catch (e) {}
 $('sair').onclick = () => { senha = ''; try { sessionStorage.removeItem('senhaPainel'); } catch (x) {} $('entrar').hidden = false; $('conteudo').hidden = true; };
