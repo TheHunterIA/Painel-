@@ -78,3 +78,12 @@ Como o jogo não guarda nenhuma identificação, "jogador" no painel é uma sess
 - O plano grátis do Upstash comporta dezenas de milhares de eventos por dia; cada noite jogada gera 2 eventos.
 - O endereço de envio é público (qualquer um pode mandar eventos). Os dados são validados e só somam contadores, mas números muito estranhos podem ser alguém enviando lixo.
 - Confira se a CrazyGames permite que o jogo envie dados para um servidor próprio antes de ligar em produção.
+
+## Relatório diário
+
+Escolha os dias (botões *Hoje*, *7 dias*, *30 dias* ou as datas **De/até**) e clique em **Relatório diário**. Aparece:
+
+- uma tabela com uma linha por dia (jogadores, novos, até que noite chegaram, tempo médio, D1/D7, celular, partidas, taxa de vitória, abandonos, compras, erros) e a linha **Período todo**;
+- um cartão para cada dia, com os números, o resumo em palavras e o funil das noites jogadas.
+
+Os filtros de **Origem**, **Aparelho** e **Volta** valem para o relatório (mudar um deles com o relatório aberto gera de novo). **Imprimir / salvar PDF** imprime só o relatório; **Baixar planilha (CSV)** baixa a tabela para abrir no Excel ou Google Planilhas. Sem dias escolhidos (*Tudo*), o relatório mostra os últimos 7 dias; o máximo é 31 dias por vez.

@@ -53,6 +53,23 @@
   .dia.on i { background: var(--barra); } .dia b { color: var(--texto); font-size: 12px; font-weight: 600; }
   details { margin-bottom: 16px; } details > summary { cursor: pointer; font-weight: 650; padding: 4px 0; }
   .erros li { margin-bottom: 6px; font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; word-break: break-word; } .erros small { color: var(--suave); margin-right: 6px; }
+  /* relatório diário */
+  button.sec { background: none; color: var(--barra); border: 1px solid var(--barra); cursor: pointer; }
+  body.rel #conteudo > :not(.filtros):not(#relatorio) { display: none; }
+  .relTopo { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .relTopo h2 { margin: 0; } .relBotoes { display: flex; gap: 8px; flex-wrap: wrap; }
+  .relDia h3 { font-size: 16px; margin: 0 0 10px; }
+  .relNums { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px 12px; margin-bottom: 10px; }
+  .relNums span { display: block; color: var(--suave); font-size: 12px; } .relNums b { font-size: 19px; }
+  .relDia ul { margin: 0 0 10px; padding-left: 20px; } .relDia li { margin-bottom: 4px; font-size: 14px; }
+  .relDia table { font-size: 13.5px; } .relDia table th, .relDia table td { padding: 5px 8px; }
+  #relTabela td:first-child { font-weight: 600; } #relTabela tr.total td { border-top: 2px solid var(--linha); font-weight: 650; }
+  @media print {
+    :root { --fundo: #fff; --cartao: #fff; --texto: #111; --suave: #555; --linha: #ccc; --barra: #3b6fe0; --bomfundo: #e3f5ea; --bom: #1f7a43; --ruimfundo: #fde8e6; --ruim: #b3261e; --alertafundo: #fdf3dc; --alerta: #8a5a00; }
+    body.rel .filtros, body.rel .relBotoes, body.rel main > :not(#conteudo) { display: none !important; }
+    main { max-width: none; padding: 0; } .cartao { break-inside: avoid; border-color: #ccc; } .rolar { overflow: visible; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
   @media (max-width: 600px) { .sair { margin-left: 0; } .numeros b { font-size: 24px; } }
 </style>
 </head>
@@ -73,12 +90,22 @@
         <label>De <input type="date" id="de"></label>
         <label>até <input type="date" id="ate"></label>
         <button class="prim" id="aplicar" type="button">Ver esses dias</button>
+        <button class="sec" id="relBtn" type="button" title="Um resumo de cada dia do período escolhido, para imprimir ou baixar">Relatório diário</button>
         <label>Origem <select id="origem"><option value="todos">Todas</option><option value="cg">CrazyGames</option><option value="fora">Fora da CrazyGames</option></select></label>
         <label>Aparelho <select id="disp"><option value="todos">Todos</option><option value="cel">Celular</option><option value="pc">Computador</option></select></label>
         <label>Volta <select id="volta"></select></label>
         <button class="sair" id="sair" type="button">Sair</button>
       </div>
       <p class="mostrando" id="mostrando"></p>
+    </div>
+    <div id="relatorio" hidden>
+      <div class="cartao">
+        <div class="relTopo"><h2 id="relTitulo">Relatório diário</h2>
+          <div class="relBotoes"><button class="prim" id="relImprimir" type="button" disabled>Imprimir / salvar PDF</button><button class="sec" id="relCsv" type="button" disabled>Baixar planilha (CSV)</button><button class="sec" id="relFechar" type="button">Voltar ao painel</button></div></div>
+        <p class="dica" id="relInfo"></p>
+        <div class="rolar"><table id="relTabela"></table></div>
+      </div>
+      <div id="relDias"></div>
     </div>
     <p id="semBanco" class="aviso" hidden>O banco ainda não está conectado: os dados abaixo somem a cada nova implantação. Instale o Upstash Redis no Vercel (veja o LEIA-ME).</p>
     <div id="notaDetalhe" class="nota" hidden></div>
@@ -233,14 +260,108 @@ async function carregar() {
   $('tErros').innerHTML = ec.length ? '<tr><th>Erro (mais frequentes)</th><th>Vezes</th></tr>' + ec.map(([m, c]) => `<tr><td style="white-space:normal;text-align:left">${esc(m)}</td><td>${c}</td></tr>`).join('') : '';
   const ev = Object.entries(d.eventos).sort((a, b) => b[1] - a[1]);
   $('tEventos').innerHTML = '<tr><th>Evento</th><th>Vezes</th></tr>' + ev.map(([k, v]) => `<tr><td>${esc(k)}</td><td>${v}</td></tr>`).join('');
+  if (document.body.classList.contains('rel')) gerarRelatorio();   // relatório aberto: acompanha os filtros
 }
+// ---------- relatório diário ----------
+const SEMANA = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+const dataLonga = d => { const w = SEMANA[new Date(d + 'T12:00:00Z').getUTCDay()]; return w[0].toUpperCase() + w.slice(1) + ', ' + dm(d) + '/' + d.slice(0, 4); };
+const MAX_REL = 31;   // dias no máximo por relatório
+const COLS = [['jogadores', 'Jogadores'], ['novos', 'Novos'], ['noite1', 'Jogaram a noite 1'], ['maisLonge', 'Noite mais longe'], ['terminaram', 'Terminaram a campanha'],
+  ['minutos', 'Minutos por jogador'], ['d1', 'D1 (%)'], ['d7', 'D7 (%)'], ['celular', 'No celular (%)'], ['partidas', 'Partidas'], ['vitoria', 'Taxa de vitória (%)'],
+  ['abandonos', 'Saíram no meio'], ['compras', 'Compras na Oficina'], ['erros', 'Erros']];
+let relDados = null, relToken = 0;
+
+async function buscar(de, ate) {
+  const q = new URLSearchParams({ volta: $('volta').value, origem: $('origem').value, disp: $('disp').value, de, ate });
+  const r = await fetch('/api/resumo?' + q, { headers: { 'x-senha': senha } });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.erro || 'Erro ao carregar.');
+  return d;
+}
+function numerosDia(d) {
+  const ns = d.noites, s = k => ns.reduce((a, n) => a + n[k], 0), rs = d.resumo;
+  let ultima = 0; ns.forEach((n, i) => { if (n.jogadores) ultima = i + 1; });
+  const partidas = s('vit') + s('der');
+  return { jogadores: d.total, novos: d.porDia.reduce((a, x) => a + x.novos, 0), noite1: ns[0].jogadores, maisLonge: ultima || null, terminaram: ns[23].vencedores,
+    minutos: rs.minutos, d1: rs.d1, d7: rs.d7, celular: d.disp === 'todos' ? rs.celular : null, partidas, vitoria: partidas ? Math.round(s('vit') / partidas * 100) : null,
+    abandonos: s('aband'), compras: (d.compras || []).reduce((a, c) => a + c.vezes, 0), erros: Object.values(d.errosCont || {}).reduce((a, c) => a + +c, 0) };
+}
+function funilCurto(ns) {
+  let ultima = 0; ns.forEach((n, i) => { if (n.jogadores) ultima = i + 1; });
+  if (!ultima) return '';
+  return '<div class="rolar"><table><tr><th>Noite</th><th>Começaram</th><th>Venceram</th><th>Seguiram</th><th>Taxa de vitória</th><th>Saíram no meio</th></tr>' + ns.slice(0, ultima).map((n, i) => {
+    const prox = ns[i + 1], seg = prox && n.vencedores ? Math.min(1, prox.jogadores / n.vencedores) : null, t = n.vit + n.der, tv = t ? n.vit / t : null;
+    const segC = seg === null || n.vencedores < MIN_AMOSTRA ? '' : seg < 0.6 ? 'r' : seg >= 0.8 ? 'v' : '', vC = tv === null || t < MIN_AMOSTRA ? '' : tv < 0.4 ? 'r' : '';
+    return `<tr><td>${n.n}</td><td>${n.jogadores}</td><td>${n.vencedores}</td><td>${seg === null || i + 1 === ultima ? '–' : `<span class="pill ${segC}">${Math.round(seg * 100)}%</span>`}</td>
+      <td>${tv === null ? '–' : `<span class="pill ${vC}">${Math.round(tv * 100)}%</span>`}</td><td>${n.aband || '–'}</td></tr>`;
+  }).join('') + '</table></div>';
+}
+const NOMES_COMPRA = { cad: 'Cadência', vida: 'Trenó', rena: 'Rena', carga: 'Recarga da rena', saco: 'Saco maior' };
+function diaHTML(dia, d) {
+  const x = numerosDia(d), cols = COLS.filter(([k]) => k !== 'celular' || d.disp === 'todos');
+  const compras = (d.compras || []).filter(c => c.vezes > 0).map(c => esc(NOMES_COMPRA[c.k] || c.k) + ' ' + c.vezes).join(', ');
+  return `<section class="cartao relDia"><h3>${dataLonga(dia)}</h3>
+    <div class="relNums">${cols.map(([k, nome]) => `<div><span>${nome}</span><b>${num(x[k])}</b></div>`).join('')}</div>
+    <ul>${frases(d).map(f => `<li>${f}</li>`).join('')}</ul>${x.jogadores ? funilCurto(d.noites) : ''}
+    ${compras ? `<p class="dica" style="margin-bottom:0"><b>Compras:</b> ${compras}</p>` : ''}</section>`;
+}
+function periodoRel() {
+  const h = iso(Date.now()); let de = estado.de || estado.ate, ate = estado.ate || estado.de, nota = '';
+  if (!de) { de = soma(h, -6); ate = h; nota = 'Nenhum período escolhido: mostrando os últimos 7 dias. '; }
+  if (ate > h) ate = h; if (de > ate) de = ate;
+  if (Date.parse(ate) - Date.parse(de) > (MAX_REL - 1) * 864e5) { de = soma(ate, -(MAX_REL - 1)); nota += `O relatório vai até ${MAX_REL} dias: mostrando os últimos ${MAX_REL} do período. `; }
+  const dias = []; for (let d = ate; d >= de; d = soma(d, -1)) dias.push(d);   // do mais recente para o mais antigo
+  return { de, ate, dias, nota };
+}
+async function gerarRelatorio() {
+  const meu = ++relToken, { de, ate, dias, nota } = periodoRel();
+  document.body.classList.add('rel'); $('relatorio').hidden = false; relDados = null;
+  $('relTitulo').textContent = 'Relatório diário — ' + (de === ate ? dm(de) : dm(de) + ' a ' + dm(ate));
+  $('relTabela').innerHTML = ''; $('relDias').innerHTML = ''; $('relCsv').disabled = $('relImprimir').disabled = true;
+  const filtros = $('mostrando').textContent.split(' · ').slice(1).join(' · ');
+  $('relInfo').textContent = nota + 'Gerando… 0 de ' + dias.length + ' dias.';
+  const res = new Array(dias.length); let feitos = 0, prox = 0, periodo = null;
+  try {
+    const trab = async () => { while (prox < dias.length) { const j = prox++; res[j] = await buscar(dias[j], dias[j]); if (meu !== relToken) return; $('relInfo').textContent = nota + 'Gerando… ' + (++feitos) + ' de ' + dias.length + ' dias.'; } };
+    const todos = [trab(), trab(), trab(), trab()];
+    if (dias.length > 1) todos.push(buscar(de, ate).then(d => { periodo = d; }));
+    await Promise.all(todos);
+  } catch (e) { if (meu === relToken) $('relInfo').textContent = 'Não foi possível gerar o relatório: ' + e.message; return; }
+  if (meu !== relToken) return;
+  const disp = res[0].disp, cols = COLS.filter(([k]) => k !== 'celular' || disp === 'todos');
+  const linhas = dias.map((dia, j) => ({ dia, x: numerosDia(res[j]) }));
+  const total = periodo ? numerosDia(periodo) : null;
+  relDados = { de, ate, cols, linhas, total, filtros };
+  $('relInfo').textContent = nota + filtros + '. Dias em UTC (cada dia termina às 21h em Brasília). No período todo, quem jogou em mais de um dia conta uma vez só.';
+  $('relTabela').innerHTML = '<tr><th>Dia</th>' + cols.map(([, nome]) => `<th>${nome}</th>`).join('') + '</tr>' +
+    linhas.map(l => `<tr><td>${dm(l.dia)} <small class="s">${SEMANA[new Date(l.dia + 'T12:00:00Z').getUTCDay()].slice(0, 3)}</small></td>` + cols.map(([k]) => `<td>${num(l.x[k])}</td>`).join('') + '</tr>').join('') +
+    (total ? '<tr class="total"><td>Período todo</td>' + cols.map(([k]) => `<td>${num(total[k])}</td>`).join('') + '</tr>' : '');
+  $('relDias').innerHTML = dias.map((dia, j) => diaHTML(dia, res[j])).join('');
+  $('relCsv').disabled = $('relImprimir').disabled = false;
+}
+function baixarCsv() {
+  const r = relDados; if (!r) return;
+  const cel = v => v === null || v === undefined ? '' : String(v).replace('.', ',');
+  const linha = (rot, x) => [rot, ...r.cols.map(([k]) => cel(x[k]))].join(';');
+  const txt = ['Dia;' + r.cols.map(([, n]) => n).join(';'), ...r.linhas.slice().reverse().map(l => linha(l.dia, l.x)), ...(r.total ? [linha('Período todo', r.total)] : [])].join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿' + txt], { type: 'text/csv;charset=utf-8' }));
+  a.download = `relatorio-save-the-holidays-${r.de}-a-${r.ate}.csv`; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+function fecharRelatorio() { relToken++; document.body.classList.remove('rel'); $('relatorio').hidden = true; }
+$('relBtn').onclick = () => {   // usa as datas digitadas, mesmo sem clicar em "Ver esses dias"
+  let de = $('de').value, ate = $('ate').value; if (!de) de = ate; if (!ate) ate = de; if (de > ate) [de, ate] = [ate, de];
+  if (de && (de !== estado.de || ate !== estado.ate)) { document.body.classList.add('rel'); $('relatorio').hidden = false; escolher(de, ate); } else gerarRelatorio();
+}; $('relFechar').onclick = fecharRelatorio; $('relCsv').onclick = baixarCsv; $('relImprimir').onclick = () => window.print();
+
 $('fSenha').onsubmit = e => { e.preventDefault(); senha = $('senha').value; try { sessionStorage.setItem('senhaPainel', senha); } catch (x) {} $('msg').textContent = ''; carregar(); };
 $('volta').onchange = carregar;
 $('disp').onchange = () => { try { sessionStorage.setItem('dispPainel', $('disp').value); } catch (e) {} carregar(); };
 try { const v = sessionStorage.getItem('dispPainel'); if (v) $('disp').value = v; } catch (e) {}
 $('origem').onchange = () => { try { sessionStorage.setItem('origemPainel', $('origem').value); } catch (e) {} carregar(); };
 try { const o = sessionStorage.getItem('origemPainel'); if (o) $('origem').value = o; } catch (e) {}
-$('sair').onclick = () => { senha = ''; try { sessionStorage.removeItem('senhaPainel'); } catch (x) {} $('entrar').hidden = false; $('conteudo').hidden = true; };
+$('sair').onclick = () => { fecharRelatorio(); senha = ''; try { sessionStorage.removeItem('senhaPainel'); } catch (x) {} $('entrar').hidden = false; $('conteudo').hidden = true; };
 if (senha) carregar();
 </script>
 </body>
